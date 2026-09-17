@@ -1,0 +1,16 @@
+python-binance
+pycoingecko
+ccxt
+praw
+pandas
+pandas-ta
+tensorflow
+lightgbm
+prophet
+jesse
+freqtrade
+ollama
+groq
+python-telegram-bot
+streamlit
+sqlite3

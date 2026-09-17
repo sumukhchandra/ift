@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSE 1-Min Prediction & Compounding Trading Platform</title>
+  <meta name="description" content="Predict Indian stock prices every 1 minute and execute automated compounding trades with profit targets > 0.8%.">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation Bar & Mode Switcher -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">⚡</div>
+      <div>
+        <div class="brand-title">
+          AlphaNSE 1-Min <span class="badge-nse">NSE INTRADAY</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode Switcher: Website vs App vs After-Market -->
+    <div class="view-mode-tabs">
+      <button id="tab-website" class="tab-btn active" onclick="switchMode('website')">
+        🖥️ Website Portal
+        <span class="tab-badge">Treasury & Controls</span>
+      </button>
+      <button id="tab-app" class="tab-btn" onclick="switchMode('app')">
+        📱 App Monitor
+        <span class="tab-badge">Live View</span>
+      </button>
+      <button id="tab-aftermarket" class="tab-btn" onclick="switchMode('aftermarket')">
+        🌙 After-Market & AI Studio
+        <span class="tab-badge" style="background: rgba(168, 85, 247, 0.25); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">Post-Session & Retrain</span>
+      </button>
+    </div>
+
+    <!-- Live Status & Audio Controls -->
+    <div class="header-actions">
+      <span id="market-session-badge" class="badge-nse" style="background: rgba(255, 51, 102, 0.15); color: var(--neon-rose); border-color: rgba(255, 51, 102, 0.35);">
+        🔴 NSE CLOSED (STANDBY)
+      </span>
+      <div class="pulse-status">
+        <div id="ws-pulse" class="pulse-dot idle"></div>
+        <span id="ws-status-text">CONNECTING...</span>
+      </div>
+      <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.78rem;" onclick="appState.audioEnabled = !appState.audioEnabled; showToast('Audio ' + (appState.audioEnabled ? 'Enabled 🔊' : 'Muted 🔇'))">
+        🔊 Audio
+      </button>
+    </div>
+  </header>
+
+  <!-- Live Scrolling Ticker Tape Across Indian Market Stocks -->
+  <div class="ticker-tape">
+    <div id="ticker-track" class="ticker-track">
+      <!-- Injected dynamically via app.js -->
+    </div>
+  </div>
+
+  <main class="main-wrapper">
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+         VIEW 1: WEBSITE PORTAL (Full Treasury Desk & Strategy Controls)
+         ════════════════════════════════════════════════════════════════════════ -->
+    <section id="website-view">
+      
+      <!-- Top Metrics Row -->
+      <div class="top-metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total Capital (Compounded)</div>
+          <div id="metric-total-capital" class="metric-val text-cyan">₹1,00,000.00</div>
+          <div class="metric-sub">
+            <span>Available:</span>
+            <strong id="metric-available-capital" style="color: var(--text-main);">₹1,00,000.00</strong>
+          </div>
+        </div>
+
+        <div class="metric-card compounding">
+          <div class="metric-label">Compounding Multiplier</div>
+          <div id="metric-compounding-mult" class="metric-val text-emerald">1.000x</div>
+          <div class="metric-sub">
+            <span>Net Profit:</span>
+            <strong id="metric-net-profit" class="text-emerald">+₹0.00</strong>
+          </div>
+        </div>
+
+        <div class="metric-card trades">
+          <div class="metric-label">Daily Trades Today</div>
+          <div id="metric-trades-count" class="metric-val text-amber">0 / 15</div>
+          <div class="metric-sub">
+            <span>Target:</span>
+            <strong>10 to 15+ Trades/Day</strong>
+          </div>
+        </div>
+
+        <div class="metric-card positions">
+          <div class="metric-label">Win Rate & Calibration</div>
+          <div id="metric-win-rate" class="metric-val text-cyan">0.0%</div>
+          <div class="metric-sub">
+            <span>Filter:</span>
+            <strong class="text-emerald">Pred Profit > 0.8%</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Engine Action Control Banner -->
+      <div class="control-banner">
+        <div class="control-group">
+          <button id="engine-toggle-btn" class="btn btn-emerald" onclick="toggleEngine()">
+            ▶️ Start Auto-Trader
+          </button>
+          <button class="btn btn-outline" onclick="triggerManualScan()">
+            ⚡ Scan 1-Min Now
+          </button>
+          <button class="btn btn-outline" style="color: var(--neon-cyan); border-color: rgba(0, 240, 255, 0.4);" onclick="confirmStartNewSession()">
+            🔄 Start New Session
+          </button>
+          <button class="btn btn-outline" onclick="triggerRetrain()">
+            🧠 Retrain 1-Min Models
+          </button>
+          <button class="btn btn-danger" onclick="emergencyCloseAll()">
+            🚨 Emergency Close All
+          </button>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; width: 100%;">
+          <span id="market-schedule-info">NSE Trading Hours: Mon-Fri 09:15 AM - 03:30 PM IST (Standby until next session)</span>
+          <button id="sim-toggle-btn" class="btn btn-outline" style="font-size: 0.72rem; padding: 2px 8px;" onclick="toggleOffMarketSim()">
+            🧪 Off-Market Sim: OFF
+          </button>
+        </div>
+      </div>
+
+      <!-- Master Capital & P&L Summary Table -->
+      <div class="panel-card master-summary-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            🏛️ Portfolio Capital & Realized Performance Summary
+          </div>
+          <span class="badge-nse">LIVE COMPOUNDING TREASURY</span>
+        </div>
+        <div class="capital-summary-table-wrapper">
+          <table class="capital-summary-table">
+            <thead>
+              <tr>
+                <th>Initial Capital</th>
+                <th>Total Capital (Equity)</th>
+                <th>Total Net Profit / Loss</th>
+                <th>Invested Margin</th>
+                <th>Available Cash</th>
+                <th>Win Rate</th>
+                <th>Completed Trades</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td id="summary-initial-capital" class="text-cyan font-bold">₹1,00,000.00</td>
+                <td id="summary-total-capital" class="text-emerald font-bold">₹1,00,000.00</td>
+                <td id="summary-net-pnl" class="text-emerald font-bold">+₹0.00 (+0.00%)</td>
+                <td id="summary-invested" class="text-amber font-bold">₹0.00</td>
+                <td id="summary-available" class="text-cyan font-bold">₹1,00,000.00</td>
+                <td id="summary-winrate" class="text-emerald font-bold">0.0% (0W / 0L)</td>
+                <td id="summary-trades-count" class="font-bold">0 Trades</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Main Two-Column Layout -->
+      <div class="content-grid">
+
+        <!-- Left Column: Treasury + Signals + Positions + History -->
+        <div>
+          
+          <!-- MANUAL MONEY ADJUSTMENT PANEL (Treasury Desk) -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                💰 Manual Capital Adjustment (Treasury Desk)
+              </div>
+              <span class="badge-nse">MANUAL CAPITAL CONTROL</span>
+            </div>
+
+            <div class="treasury-box">
+              <div class="treasury-balance-display">
+                <div class="balance-item">
+                  <div class="balance-label">Total Portfolio Equity</div>
+                  <div id="treasury-total" class="balance-val text-cyan">₹1,00,000.00</div>
+                </div>
+                <div class="balance-item">
+                  <div class="balance-label">Available Cash (Uninvested)</div>
+                  <div id="treasury-avail" class="balance-val text-emerald">₹1,00,000.00</div>
+                </div>
+                <div class="balance-item">
+                  <div class="balance-label">Margin In Active Trades</div>
+                  <div id="treasury-invest" class="balance-val text-amber">₹0.00</div>
+                </div>
+              </div>
+
+              <!-- Deposit, Withdraw & Set Capital Forms (Perfect 3-Column Alignment) -->
+              <div class="treasury-actions-grid">
+                <!-- Deposit Column Card -->
+                <div class="treasury-action-card deposit">
+                  <div class="treasury-action-header">
+                    <span>➕</span> ADD CAPITAL (DEPOSIT INR)
+                  </div>
+                  <div class="money-form-row">
+                    <input id="deposit-input" type="number" class="money-input" placeholder="Amount (e.g. 50000)" min="1000" step="1000">
+                    <button class="btn btn-emerald" onclick="submitDeposit()">Deposit</button>
+                  </div>
+                  <div class="preset-chips-row">
+                    <span class="preset-chip emerald" onclick="document.getElementById('deposit-input').value = 5000;">+5K</span>
+                    <span class="preset-chip emerald" onclick="document.getElementById('deposit-input').value = 10000;">+10K</span>
+                    <span class="preset-chip emerald" onclick="document.getElementById('deposit-input').value = 25000;">+25K</span>
+                    <span class="preset-chip emerald" onclick="document.getElementById('deposit-input').value = 50000;">+50K</span>
+                  </div>
+                </div>
+
+                <!-- Withdraw Column Card -->
+                <div class="treasury-action-card withdraw">
+                  <div class="treasury-action-header">
+                    <span>➖</span> WITHDRAW CASH (UNINVESTED ONLY)
+                  </div>
+                  <div class="money-form-row">
+                    <input id="withdraw-input" type="number" class="money-input" placeholder="Amount (e.g. 20000)" min="1000" step="1000">
+                    <button class="btn btn-danger" onclick="submitWithdrawal()">Withdraw</button>
+                  </div>
+                  <div class="preset-chips-row">
+                    <span class="preset-chip rose" onclick="document.getElementById('withdraw-input').value = 5000;">-5K</span>
+                    <span class="preset-chip rose" onclick="document.getElementById('withdraw-input').value = 10000;">-10K</span>
+                    <span class="preset-chip rose" onclick="document.getElementById('withdraw-input').value = 25000;">-25K</span>
+                  </div>
+                </div>
+
+                <!-- Set Base Capital Column Card -->
+                <div class="treasury-action-card rebase">
+                  <div class="treasury-action-header">
+                    <span>🎯</span> SET / RE-BASE CAPITAL AMOUNT
+                  </div>
+                  <div class="money-form-row">
+                    <input id="set-capital-input" type="number" class="money-input" placeholder="New Base (e.g. 100000)" min="1000" step="5000">
+                    <button class="btn btn-outline" style="color: var(--neon-cyan); border-color: var(--neon-cyan);" onclick="submitSetCapital()">Set Base</button>
+                  </div>
+                  <div class="preset-chips-row">
+                    <span class="preset-chip" onclick="document.getElementById('set-capital-input').value = 25000;">25K</span>
+                    <span class="preset-chip" onclick="document.getElementById('set-capital-input').value = 50000;">50K</span>
+                    <span class="preset-chip" onclick="document.getElementById('set-capital-input').value = 100000;">100K</span>
+                    <span class="preset-chip" onclick="document.getElementById('set-capital-input').value = 500000;">500K</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 🤖 Autonomous AI Agent Supervisor Control Center -->
+          <div class="ai-agent-card" id="ai-agent-supervisor-panel">
+            <div class="ai-agent-header">
+              <div class="ai-agent-brand">
+                <div class="ai-agent-icon">🤖</div>
+                <div>
+                  <div style="font-weight: 800; font-size: 1.15rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                    AlphaAgent Tri-Surface Supervisor
+                    <span id="ai-agent-status-badge" class="ai-agent-status-pill">● AUTONOMOUS MONITORING</span>
+                  </div>
+                  <div style="font-size: 0.76rem; color: var(--text-muted);">
+                    Active surveillance across Web Treasury Desk ↔ Live Mobile App ↔ Simulation & Research Lab
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <button id="ai-agent-autopilot-btn" class="btn btn-emerald" style="font-size: 0.8rem; padding: 6px 14px;" onclick="toggleAgentAutopilot()">
+                  ⚡ Autopilot: ON
+                </button>
+                <button class="btn btn-outline" style="font-size: 0.8rem; padding: 6px 14px;" onclick="requestAgentPlanSweep()">
+                  🔄 Run Diagnostic Sweep
+                </button>
+              </div>
+            </div>
+
+            <!-- Tri-Surface Telemetry Monitor -->
+            <div class="ai-agent-telemetry-grid">
+              <div class="ai-telemetry-box">
+                <div class="ai-telemetry-title">
+                  <span>🌐</span> Web Treasury Desk
+                </div>
+                <div id="ai-telemetry-web-val" class="ai-telemetry-val text-emerald">₹5,000.00</div>
+                <div id="ai-telemetry-web-sub" class="ai-telemetry-sub">Uninvested Cash: 100% | Drawdown: 0.00%</div>
+              </div>
+              <div class="ai-telemetry-box">
+                <div class="ai-telemetry-title">
+                  <span>📱</span> Live Mobile App Monitor
+                </div>
+                <div id="ai-telemetry-app-val" class="ai-telemetry-val text-cyan">0 / 15 Trades</div>
+                <div id="ai-telemetry-app-sub" class="ai-telemetry-sub">Win Rate: 0.0% | Active Margin: ₹0.00</div>
+              </div>
+              <div class="ai-telemetry-box">
+                <div class="ai-telemetry-title">
+                  <span>🧪</span> Simulation & Research Lab
+                </div>
+                <div id="ai-telemetry-lab-val" class="ai-telemetry-val text-amber">Accuracy: --%</div>
+                <div id="ai-telemetry-lab-sub" class="ai-telemetry-sub">Whipsaw Traps: 0 | Spread Variance: Optimal</div>
+              </div>
+            </div>
+
+            <!-- Agent Reasoning Stream -->
+            <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+                🧠 Live Agent Thought Stream & Telemetry Diagnostics
+              </span>
+              <span id="ai-thought-timestamp" style="font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-dim);">Updated live</span>
+            </div>
+            <div id="ai-agent-thought-stream" class="ai-agent-thought-stream">
+              [AGENT-SUPERVISOR] Tri-surface surveillance initialized. Monitoring Web Treasury, Mobile App, and Simulation Lab...
+            </div>
+
+            <!-- Active AI Action Plans -->
+            <div class="ai-agent-plans-section">
+              <div style="font-size: 0.8rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; justify-content: space-between;">
+                <span>📋 Formulated Strategic Action Plans</span>
+                <span id="ai-plans-count-badge" class="badge-nse" style="font-size: 0.65rem;">0 PLANS</span>
+              </div>
+              <div id="ai-agent-plans-list">
+                <!-- Injected dynamically via app.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 1-Minute Prediction Radar Grid -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                🎯 1-Minute Stock Prediction Radar (NSE Universe)
+              </div>
+              <span style="font-size: 0.75rem; color: var(--neon-cyan);">Auto-invests when Expected Profit > 0.8%</span>
+            </div>
+            <div id="signals-grid" class="signals-grid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Prediction vs Realized Market Accuracy (Elapsed Time Verification) -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                🔍 Prediction vs Realized Market Accuracy (Elapsed Time Verification)
+              </div>
+              <div id="accuracy-stats-badges" style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.75rem; align-items: center;">
+                <span class="badge-live-pulse" id="badge-verifs-live">LIVE 1M AUTO-SYNC</span>
+                <span class="badge-nse" id="badge-range-hit">Exact Range Hit: 0.0%</span>
+                <span class="badge-nse" id="badge-dir-acc" style="color: var(--neon-emerald);">Direction Acc: 0.0%</span>
+                <span class="badge-nse" id="badge-mae" style="color: var(--neon-cyan);">Avg Error: 0.0%</span>
+              </div>
+            </div>
+            <div class="trade-table-wrapper">
+              <table class="trade-table">
+                <thead>
+                  <tr>
+                    <th>Resolved</th>
+                    <th>Stock</th>
+                    <th>Pred Price</th>
+                    <th>Actual Price</th>
+                    <th>Exact Value Reached?</th>
+                    <th>Pred Return</th>
+                    <th>Actual Return</th>
+                    <th>Direction</th>
+                    <th>Abs Error</th>
+                  </tr>
+                </thead>
+                <tbody id="verifications-tbody">
+                  <tr><td colspan="9" style="text-align:center; color: var(--text-dim);">Waiting for 1-minute prediction intervals to complete...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Active Positions Desk -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                📊 Active Compounding Positions
+              </div>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Real-time Unrealized P&L</span>
+            </div>
+            <div class="trade-table-wrapper">
+              <table class="trade-table">
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Entry Price</th>
+                    <th>Current Price</th>
+                    <th>Qty</th>
+                    <th>Invested</th>
+                    <th>Net P&L (Post-Tax)</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="positions-tbody">
+                  <!-- Injected dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Compounding Growth Curve Chart -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                📈 Compounding Net Asset Value (NAV) Curve
+              </div>
+              <span class="text-emerald" style="font-size: 0.75rem; font-weight: 700;">Profits Reinvested Each Trade</span>
+            </div>
+            <div style="width: 100%; height: 180px; position: relative;">
+              <canvas id="compounding-canvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Comprehensive All Trades Table & P&L Ledger -->
+          <div class="panel-card">
+            <div class="panel-header" style="flex-wrap: wrap; gap: 10px;">
+              <div>
+                <div class="panel-title" style="display: flex; align-items: center; gap: 8px;">
+                  <span>📜 All Executed Trades & P&L Ledger</span>
+                  <span class="badge-live-pulse" style="font-size: 0.68rem;">CURRENT SESSION LOGS</span>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">
+                  Complete trade audit log for the active session. All historical trades across sessions are preserved in Settings History.
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <div class="trade-filter-pills">
+                  <button id="pill-all" class="pill-btn active" onclick="setTradeFilter('ALL')">All (<span id="filter-all-count">0</span>)</button>
+                  <button id="pill-win" class="pill-btn" onclick="setTradeFilter('WIN')">Wins (<span id="filter-win-count">0</span>)</button>
+                  <button id="pill-loss" class="pill-btn" onclick="setTradeFilter('LOSS')">Losses (<span id="filter-loss-count">0</span>)</button>
+                  <button id="pill-buy" class="pill-btn" onclick="setTradeFilter('BUY')">Buys (<span id="filter-buy-count">0</span>)</button>
+                </div>
+                <button class="btn btn-outline" style="font-size: 0.72rem; padding: 4px 8px; color: var(--neon-cyan); border-color: rgba(0,240,255,0.4);" onclick="openSettingsHistory()">
+                  📜 View History in Settings
+                </button>
+                <button class="btn btn-outline" style="font-size: 0.72rem; padding: 4px 10px;" onclick="exportTradesToCSV()">
+                  📥 Export CSV
+                </button>
+              </div>
+            </div>
+            <div class="trade-table-wrapper" style="max-height: 480px;">
+              <table class="trade-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Action</th>
+                    <th>Stock / Company</th>
+                    <th>Initial Capital</th>
+                    <th>Invest Amount</th>
+                    <th>Exec Price</th>
+                    <th>Net Profit / Loss</th>
+                    <th>Status</th>
+                    <th>Capital After</th>
+                    <th>Win Rate</th>
+                    <th>Reason / Trigger</th>
+                  </tr>
+                </thead>
+                <tbody id="trades-tbody">
+                  <!-- Injected dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Settings & Live Candlestick & Manual Trade Terminal -->
+        <div>
+
+          <!-- Strategy Settings & Trade History Panel -->
+          <div class="panel-card" id="settings-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                ⚙️ Strategy & Trade History
+              </div>
+              <span class="badge-nse" id="settings-session-badge">ACTIVE SESSION</span>
+            </div>
+
+            <!-- Settings Sub-Navigation Tabs -->
+            <div class="settings-nav-tabs">
+              <button id="btn-settings-controls" class="settings-tab-btn active" onclick="switchSettingsTab('controls')">
+                ⚙️ Strategy & Controls
+              </button>
+              <button id="btn-settings-history" class="settings-tab-btn" onclick="switchSettingsTab('history')">
+                📜 Trade History (All Sessions)
+              </button>
+            </div>
+
+            <!-- TAB 1: Controls & Parameters -->
+            <div id="settings-tab-controls-content">
+              <!-- Profit Threshold -->
+              <div class="param-row">
+                <div class="param-label-bar">
+                  <span>Profit Target Threshold</span>
+                  <strong id="profit-thresh-val" class="text-emerald">0.80%</strong>
+                </div>
+                <input type="range" class="param-slider" min="0.3" max="2.0" step="0.05" value="0.8" onchange="updateSetting('profit_threshold_pct', this.value)">
+                <div style="font-size: 0.7rem; color: var(--text-muted);">Triggers BUY when 1m expected profit exceeds this value.</div>
+              </div>
+
+              <!-- Stop-Loss -->
+              <div class="param-row">
+                <div class="param-label-bar">
+                  <span>Stop-Loss Cutoff</span>
+                  <strong id="sl-thresh-val" class="text-rose">0.40%</strong>
+                </div>
+                <input type="range" class="param-slider" min="0.1" max="1.5" step="0.05" value="0.4" onchange="updateSetting('stop_loss_pct', this.value)">
+                <div style="font-size: 0.7rem; color: var(--text-muted);">Protects capital if price moves against position.</div>
+              </div>
+
+              <!-- Position Sizing -->
+              <div class="param-row">
+                <div class="param-label-bar">
+                  <span>Compounding Allocation per Trade</span>
+                  <strong id="sizing-val" class="text-cyan">15.0%</strong>
+                </div>
+                <input type="range" class="param-slider" min="5" max="40" step="1" value="15" onchange="updateSetting('position_sizing_pct', this.value)">
+                <div style="font-size: 0.7rem; color: var(--text-muted);">Percentage of available cash allocated dynamically.</div>
+              </div>
+
+              <!-- Target Trades Per Day -->
+              <div class="param-row">
+                <div class="param-label-bar">
+                  <span>Target Trades / Day</span>
+                  <strong id="target-trades-val" class="text-amber">15 trades</strong>
+                </div>
+                <input type="range" class="param-slider" min="5" max="30" step="1" value="15" onchange="updateSetting('target_daily_trades', this.value)">
+                <div style="font-size: 0.7rem; color: var(--text-muted);">Engine actively scans for 10-15+ high-conviction trades.</div>
+              </div>
+
+              <!-- Session Reset Actions -->
+              <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">SESSION MANAGEMENT</div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-outline" style="flex: 1; justify-content: center; font-size: 0.75rem; color: var(--neon-cyan); border-color: rgba(0, 240, 255, 0.4);" onclick="confirmStartNewSession()">
+                    🔄 Start New Session
+                  </button>
+                  <button class="btn btn-outline" style="flex: 1; justify-content: center; font-size: 0.75rem;" onclick="switchSettingsTab('history')">
+                    📜 View All History
+                  </button>
+                </div>
+                <div style="font-size: 0.68rem; color: var(--text-dim); margin-top: 5px;">
+                  Starting a new session clears the active trade table while preserving all historical trades in History.
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 2: Trade History (All Sessions) -->
+            <div id="settings-tab-history-content" style="display: none;">
+              <!-- History Toolbar -->
+              <div class="history-toolbar">
+                <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 150px;">
+                  <label style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">DATE:</label>
+                  <select id="history-date-select" class="history-select" onchange="onHistoryDateChange(this.value)">
+                    <option value="all" selected>All Dates & Sessions</option>
+                    <option value="today">Today's Session</option>
+                  </select>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 130px;">
+                  <input id="history-search-input" type="text" class="history-select" style="width: 100%;" placeholder="Filter symbol..." oninput="onHistorySearch(this.value)">
+                </div>
+
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-outline" style="font-size: 0.72rem; padding: 4px 8px;" onclick="exportHistoryToCSV()">
+                    📥 Export CSV
+                  </button>
+                  <button class="btn btn-danger" style="font-size: 0.72rem; padding: 4px 8px;" onclick="confirmStartNewSession()" title="Clear active session from main view">
+                    🔄 New Session
+                  </button>
+                </div>
+              </div>
+
+              <!-- History Session Summary KPIs -->
+              <div class="history-summary-grid">
+                <div class="history-metric-card">
+                  <div class="history-metric-lbl">Total Trades</div>
+                  <div id="hist-kpi-trades" class="history-metric-val text-cyan">0</div>
+                </div>
+                <div class="history-metric-card">
+                  <div class="history-metric-lbl">Win Rate</div>
+                  <div id="hist-kpi-winrate" class="history-metric-val text-emerald">0.0%</div>
+                </div>
+                <div class="history-metric-card">
+                  <div class="history-metric-lbl">Net P&L</div>
+                  <div id="hist-kpi-pnl" class="history-metric-val text-emerald">₹0.00</div>
+                </div>
+                <div class="history-metric-card">
+                  <div class="history-metric-lbl">Taxes & Brokerage</div>
+                  <div id="hist-kpi-frictions" class="history-metric-val text-amber">₹0.00</div>
+                </div>
+              </div>
+
+              <!-- Scrollable Historical Trades Table -->
+              <div class="history-table-wrapper">
+                <table class="trade-table" style="font-size: 0.74rem;">
+                  <thead>
+                    <tr>
+                      <th>Time / Date</th>
+                      <th>Symbol</th>
+                      <th>Action</th>
+                      <th>Invested</th>
+                      <th>Exec Price</th>
+                      <th>Net P&L</th>
+                      <th>Status</th>
+                      <th>Capital After</th>
+                      <th>Win Rate</th>
+                      <th>Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody id="settings-history-tbody">
+                    <tr><td colspan="10" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">Loading trade history...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Interactive 1-Minute Candlestick Chart -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title" id="candle-symbol-label">
+                RELIANCE - 1-Min Candles
+              </div>
+              <span class="badge-nse">1M INTRADAY</span>
+            </div>
+            <div style="width: 100%; height: 220px; position: relative;">
+              <canvas id="candle-canvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Manual Trade Terminal -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                ⚡ Manual Trade Terminal
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <div>
+                <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">SELECT STOCK</label>
+                <select id="manual-sym-select" class="money-input" style="width: 100%;" onchange="selectSymbol(this.value)">
+                  <option value="RELIANCE.NS">RELIANCE (Reliance Industries)</option>
+                  <option value="TCS.NS">TCS (Tata Consultancy Services)</option>
+                  <option value="HDFCBANK.NS">HDFCBANK (HDFC Bank)</option>
+                  <option value="ICICIBANK.NS">ICICIBANK (ICICI Bank)</option>
+                  <option value="INFY.NS">INFY (Infosys)</option>
+                  <option value="SBIN.NS">SBIN (State Bank of India)</option>
+                  <option value="BHARTIARTL.NS">BHARTIARTL (Bharti Airtel)</option>
+                  <option value="BAJFINANCE.NS">BAJFINANCE (Bajaj Finance)</option>
+                  <option value="AXISBANK.NS">AXISBANK (Axis Bank)</option>
+                  <option value="TATACAP.NS">TATACAP (Tata Capital)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">ALLOCATION (INR)</label>
+                <input id="manual-amount-input" type="number" class="money-input" style="width: 100%;" value="15000" step="1000">
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 4px;">
+                <button class="btn btn-emerald" style="justify-content: center;" onclick="const sym = document.getElementById('manual-sym-select').value; const amt = parseFloat(document.getElementById('manual-amount-input').value); fetch('/api/manual-trade', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({symbol:sym, action:'BUY', amount:amt})}).then(r=>r.json()).then(d=>{showToast(d.message || 'Order placed'); fetchState();});">
+                  BUY
+                </button>
+                <button class="btn btn-danger" style="justify-content: center;" onclick="const sym = document.getElementById('manual-sym-select').value; manualClose(sym);">
+                  SELL
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+         VIEW 2: APP PORTAL (Dedicated Live Monitoring Terminal - Strictly No Editing)
+         ════════════════════════════════════════════════════════════════════════ -->
+    <section id="app-view">
+      <div class="app-container">
+        
+        <!-- App Top Bar Controls -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge-read-only">
+              🔒 READ-ONLY LIVE MONITOR
+            </span>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">No editing enabled — Pure live telemetry</span>
+          </div>
+          <button id="app-fullscreen-btn" class="btn btn-outline" style="font-size: 0.78rem; padding: 4px 12px;" onclick="toggleAppFrame()">
+            🖥️ Fullscreen App
+          </button>
+        </div>
+
+        <!-- Mobile Device Mockup Container -->
+        <div class="app-viewport-wrapper">
+          <div id="app-device-frame" class="app-device-frame">
+            
+            <!-- Mobile Notch -->
+            <div class="device-notch">
+              <div class="notch-camera"></div>
+            </div>
+
+            <!-- Device Header -->
+            <div class="device-header">
+              <div class="device-header-title">
+                <div style="width: 22px; height: 22px; border-radius: 4px; background: var(--neon-cyan); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #000; font-weight: 800;">α</div>
+                AlphaNSE App
+              </div>
+              <button class="btn btn-outline" style="font-size: 0.7rem; padding: 2px 8px; color: var(--neon-emerald); border-color: rgba(0,255,136,0.3);" onclick="openAppCapitalModal()">
+                💰 Adjust
+              </button>
+            </div>
+
+            <!-- App Internal Sub-Navigation -->
+            <div class="app-sub-nav">
+              <button id="app-subtab-live" class="app-sub-tab active" onclick="switchAppSubTab('live')">⚡ Live Monitor</button>
+              <button id="app-subtab-aftermarket" class="app-sub-tab" onclick="switchAppSubTab('aftermarket')">🌙 After-Market & AI</button>
+            </div>
+
+            <!-- App Scrollable Body -->
+            <div class="app-body">
+              
+              <!-- Live Monitor Content Container -->
+              <div id="app-content-live">
+              
+              <!-- Compounding NAV Card -->
+              <div class="app-compounding-card">
+                <div class="app-nav-label">Compounded Portfolio NAV</div>
+                <div id="app-nav-val" class="app-nav-val">₹1,00,000.00</div>
+                <div class="app-comp-metrics">
+                  <div>
+                    <span style="color: var(--text-muted);">Net Profit:</span>
+                    <strong id="app-total-profit" class="text-emerald">+₹0.00</strong>
+                  </div>
+                  <div>
+                    <span style="color: var(--text-muted);">Compounding:</span>
+                    <strong id="app-comp-mult" class="text-cyan">1.00x</strong>
+                  </div>
+                  <div>
+                    <span style="color: var(--text-muted);">Win Rate:</span>
+                    <strong id="app-win-rate" class="text-amber">0.0%</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- App Capital & Performance Summary Table -->
+              <div class="app-capital-table-card">
+                <div class="app-section-title">
+                  <span>💼 Capital & Treasury Portfolio</span>
+                  <button class="btn btn-emerald" style="font-size: 0.72rem; padding: 2px 8px;" onclick="openAppCapitalModal()">
+                    💰 Adjust Capital
+                  </button>
+                </div>
+                <div class="app-metrics-table-wrapper">
+                  <table class="app-metrics-table">
+                    <tbody>
+                      <tr>
+                        <td class="lbl">Initial Capital:</td>
+                        <td id="app-initial-capital" class="val text-cyan">₹1,00,000.00</td>
+                      </tr>
+                      <tr>
+                        <td class="lbl">Total Capital:</td>
+                        <td id="app-total-capital" class="val text-emerald">₹1,00,000.00</td>
+                      </tr>
+                      <tr>
+                        <td class="lbl">Total Profit / Loss:</td>
+                        <td id="app-net-pnl" class="val text-emerald">+₹0.00 (+0.00%)</td>
+                      </tr>
+                      <tr>
+                        <td class="lbl">Invested Margin:</td>
+                        <td id="app-invested-margin" class="val text-amber">₹0.00</td>
+                      </tr>
+                      <tr>
+                        <td class="lbl">Available Cash:</td>
+                        <td id="app-available-cash" class="val text-cyan">₹1,00,000.00</td>
+                      </tr>
+                      <tr>
+                        <td class="lbl">Win Rate:</td>
+                        <td id="app-winrate-table" class="val text-emerald">0.0%</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Daily Trades Progress Ring (10-15 Target) -->
+              <div class="daily-target-card">
+                <div class="target-info">
+                  <div class="target-title">Daily Trades Execution</div>
+                  <div id="app-target-count" class="target-count">0 / 15</div>
+                  <div style="font-size: 0.7rem; color: var(--text-muted);">Target: 10 to 15+ Trades/Day</div>
+                </div>
+                <div class="progress-ring-container">
+                  <svg class="progress-ring" width="52" height="52">
+                    <circle stroke="rgba(255,255,255,0.06)" stroke-width="4" fill="transparent" r="22" cx="26" cy="26" />
+                    <circle id="progress-ring-circle" class="progress-ring-circle" stroke-width="4" stroke-dasharray="138.23" stroke-dashoffset="138.23" stroke-linecap="round" fill="transparent" r="22" cx="26" cy="26" />
+                  </svg>
+                  <div id="app-ring-pct" class="ring-label text-cyan">0%</div>
+                </div>
+              </div>
+
+              <!-- Live Active Positions Card -->
+              <div class="app-positions-card">
+                <div class="app-section-title">
+                  <span>Live Active Positions</span>
+                  <span class="badge-nse">AUTO-MANAGED</span>
+                </div>
+                <div id="app-pos-list" class="app-pos-list">
+                  <!-- Injected dynamically -->
+                </div>
+              </div>
+
+              <!-- App All Trades & Execution Feed Card -->
+              <div class="app-trades-card">
+                <div class="app-section-title">
+                  <span>📜 Trades & Performance</span>
+                  <div class="app-tab-pills">
+                    <button id="app-tab-table-btn" class="pill-btn active" onclick="switchAppTradeView('table')">📊 Table</button>
+                    <button id="app-tab-feed-btn" class="pill-btn" onclick="switchAppTradeView('feed')">⚡ Stream</button>
+                  </div>
+                </div>
+
+                <!-- Touch-scrollable App Trades Table -->
+                <div id="app-trades-table-container" class="app-table-scroll">
+                  <table class="app-trades-table">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Symbol</th>
+                        <th>Action</th>
+                        <th>Invested</th>
+                        <th>Profit / Loss</th>
+                        <th>Status</th>
+                        <th>Init Cap</th>
+                        <th>Cap After</th>
+                        <th>Win Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody id="app-trades-tbody">
+                      <!-- Dynamically rendered -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Stream Feed (Toggleable) -->
+                <div id="app-stream-feed" class="stream-feed" style="display: none; max-height: 260px; overflow-y: auto; margin-top: 0.5rem;">
+                  <!-- Dynamically rendered -->
+                </div>
+              </div>
+              </div> <!-- End of #app-content-live -->
+
+              <!-- App After-Market Sub-Content Container -->
+              <div id="app-content-aftermarket" style="display: none; padding-top: 4px;">
+                
+                <!-- Status Banner -->
+                <div style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 10px; text-align: center;">
+                  <span class="aftermarket-badge-pill" style="font-size: 0.68rem; margin-bottom: 4px;">🌙 AFTER-SESSION STANDBY</span>
+                  <div style="font-size: 0.82rem; font-weight: 800; color: #fff; margin-top: 4px;">Tomorrow Open: 09:15 AM IST</div>
+                </div>
+
+                <!-- Session Recap Card -->
+                <div class="app-compounding-card" style="border-color: rgba(168, 85, 247, 0.3); margin-bottom: 10px;">
+                  <div class="app-nav-label">Today's Session Performance</div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                    <div>
+                      <span style="font-size: 0.68rem; color: var(--text-muted);">Win Rate:</span>
+                      <strong id="app-am-winrate" class="text-emerald" style="font-size: 1.05rem; display: block;">69.57%</strong>
+                    </div>
+                    <div>
+                      <span style="font-size: 0.68rem; color: var(--text-muted);">Completed:</span>
+                      <strong id="app-am-trades" class="text-amber" style="font-size: 1.05rem; display: block;">621 trades</strong>
+                    </div>
+                    <div>
+                      <span style="font-size: 0.68rem; color: var(--text-muted);">Model MAE:</span>
+                      <strong id="app-am-mae" class="text-cyan" style="font-size: 1.05rem; display: block;">0.050%</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 1-Click Retrain for App -->
+                <div style="background: rgba(16, 24, 38, 0.85); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 10px;">
+                  <div style="font-size: 0.8rem; font-weight: 800; color: #e9d5ff; margin-bottom: 3px;">⚡ Overnight AI Optimization</div>
+                  <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 6px;">Retrain ensemble with today's real candles (58,388 samples).</p>
+                  <button id="app-retrain-btn" class="btn btn-primary" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #9333ea, #06b6d4); font-size: 0.72rem; font-weight: 700; padding: 6px 10px;" onclick="triggerLiveRetrain()">
+                    🚀 Retrain & Calibrate Models
+                  </button>
+                  <div id="app-retrain-status" style="font-size: 0.68rem; color: #c084fc; margin-top: 4px; font-family: var(--font-mono);">Status: Ready. 23 features calibrated.</div>
+                </div>
+
+                <!-- Tomorrow Opening Predictions for App -->
+                <div class="app-capital-table-card">
+                  <div class="app-section-title">
+                    <span>🎯 Opening Forecasts (10 Stocks)</span>
+                    <span style="font-size: 0.68rem; color: var(--neon-emerald);">1 BUY Signal</span>
+                  </div>
+                  <div id="app-predictions-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                    <!-- Dynamically populated in app.js -->
+                  </div>
+                </div>
+
+              </div> <!-- End of #app-content-aftermarket -->
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+         VIEW 3: AFTER-MARKET & AI OPTIMIZATION STUDIO (Desktop Portal)
+         ════════════════════════════════════════════════════════════════════════ -->
+    <section id="aftermarket-view" style="display: none;">
+      
+      <!-- Top Banner -->
+      <div class="aftermarket-banner">
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+            <span class="aftermarket-badge-pill">🌙 POST-MARKET & AI LAB</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">NSE Regular Session (09:15 - 15:30 IST) Closed</span>
+          </div>
+          <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">
+            After-Session Trading Telemetry & Model Self-Improvement Studio
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
+            Audit today's completed trades, inspect tomorrow's 09:15 AM opening predictions, and use after-hours data to retrain & calibrate predictive efficiency.
+          </p>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+          <div class="status-indicator-box" style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); padding: 6px 14px; border-radius: var(--radius-sm);">
+            <span style="font-size: 0.72rem; color: #c084fc; font-weight: 700; display: block;">NEXT MARKET OPEN</span>
+            <span id="aftermarket-countdown" style="font-size: 1rem; font-weight: 800; color: #fff; font-family: var(--font-mono);">Tomorrow at 09:15 AM IST</span>
+          </div>
+          <button class="btn btn-outline" style="color: #c084fc; border-color: rgba(168, 85, 247, 0.4); font-size: 0.78rem; padding: 4px 10px;" onclick="fetchAftermarketData()">
+            🔄 Refresh Predictions & Recap
+          </button>
+        </div>
+      </div>
+
+      <!-- Key Session Summary KPI Cards (4 Cards) -->
+      <div class="aftermarket-metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Session Win Rate & Completed</div>
+          <div id="am-kpi-winrate" class="metric-val text-emerald">69.57%</div>
+          <div class="metric-sub">
+            <span id="am-kpi-trades-count">432 Wins / 189 Losses (621 Total)</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Session Realized Net P&L</div>
+          <div id="am-kpi-netpnl" class="metric-val text-rose">-₹7,616.87</div>
+          <div class="metric-sub">
+            <span id="am-kpi-profitfactor">Profit Factor: 0.65 (Gross Wins: +₹14K)</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">ML Model Return Error (MAE)</div>
+          <div id="am-kpi-mae" class="metric-val text-cyan">0.050% (5 bps)</div>
+          <div class="metric-sub">
+            <span style="color: var(--neon-emerald);">93.6% Error Reduction (from 0.78%)</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Statutory Taxes & Brokerage</div>
+          <div id="am-kpi-frictions" class="metric-val text-amber">₹6,021.52</div>
+          <div class="metric-sub">
+            <span>STT/GST: ₹4,688.19 | Brokerage: ₹1,333.33</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Two-Column Split: Predictions vs Interactive ML Calibration Studio -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+        
+        <!-- Column 1: Next-Session Opening 1-Minute Predictions Table -->
+        <div class="aftermarket-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+              <div style="font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>🎯</span> Tomorrow Opening 1-Min Predictions
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">
+                Forecasts for 09:15 AM IST open across 10 NSE Universe stocks
+              </div>
+            </div>
+            <span class="signal-badge buy" style="font-size: 0.75rem;">1 BUY Signal Active</span>
+          </div>
+
+          <div class="table-container" style="max-height: 420px; overflow-y: auto;">
+            <table class="trades-table" style="font-size: 0.78rem;">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Close Price</th>
+                  <th>Target Open (1m)</th>
+                  <th>Pred Return</th>
+                  <th>Conf %</th>
+                  <th>Signal</th>
+                  <th>Dynamic Hurdle</th>
+                </tr>
+              </thead>
+              <tbody id="am-predictions-tbody">
+                <!-- Dynamically populated via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Column 2: Interactive Model Efficiency & Calibration Studio -->
+        <div class="aftermarket-panel aftermarket-panel-purple">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+              <div style="font-size: 1.05rem; font-weight: 800; color: #e9d5ff; display: flex; align-items: center; gap: 8px;">
+                <span>⚡</span> Model Efficiency & Self-Improvement Studio
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">
+                Use after-hours data to retrain ensemble and tune execution efficiency
+              </div>
+            </div>
+            <span style="font-size: 0.72rem; color: #c084fc; border: 1px solid rgba(168,85,247,0.4); padding: 2px 8px; border-radius: 4px;">
+              23 Features Active
+            </span>
+          </div>
+
+          <!-- 1-Click Retrain Action -->
+          <div style="background: rgba(168, 85, 247, 0.08); border: 1px dashed rgba(168, 85, 247, 0.4); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div>
+                <strong style="color: #fff; font-size: 0.85rem;">⚡ 1-Click Overnight Ensemble Retraining</strong>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                  Ingests latest 1-min candles + master dataset (58,388 samples) and refits LightGBM, XGBoost, CatBoost & Balanced RF.
+                </div>
+              </div>
+              <button id="am-retrain-btn" class="btn btn-primary" style="background: linear-gradient(135deg, #9333ea, #06b6d4); color: #fff; font-weight: 700; border: none; padding: 8px 16px; font-size: 0.8rem;" onclick="triggerLiveRetrain()">
+                🚀 Retrain ML Ensemble
+              </button>
+            </div>
+            <div id="am-retrain-status" style="font-size: 0.75rem; color: #c084fc; font-family: var(--font-mono);">
+              Status: Ready. Last model retrained with Return MAE: 0.050% across 58,388 candles.
+            </div>
+          </div>
+
+          <!-- Sliders for Fine-Tuning Execution Efficiency -->
+          <div style="margin-bottom: 1.25rem;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <span>🎛️</span> Parameter Calibration & Risk Tuning
+            </div>
+
+            <!-- Profit Hurdle -->
+            <div class="studio-slider-group">
+              <div class="studio-slider-header">
+                <span style="color: var(--text-muted);">Base Profit Hurdle (% Scalp Target):</span>
+                <strong id="studio-hurdle-display" class="text-cyan">0.20%</strong>
+              </div>
+              <input id="studio-hurdle-slider" type="range" class="studio-slider" min="0.10" max="0.50" step="0.01" value="0.20" oninput="document.getElementById('studio-hurdle-display').innerText = parseFloat(this.value).toFixed(2) + '%'">
+            </div>
+
+            <!-- Stop Loss -->
+            <div class="studio-slider-group">
+              <div class="studio-slider-header">
+                <span style="color: var(--text-muted);">Stop-Loss Cutoff (% Max Loss):</span>
+                <strong id="studio-sl-display" class="text-rose">0.30%</strong>
+              </div>
+              <input id="studio-sl-slider" type="range" class="studio-slider" min="0.15" max="0.60" step="0.01" value="0.30" oninput="document.getElementById('studio-sl-display').innerText = parseFloat(this.value).toFixed(2) + '%'">
+            </div>
+
+            <!-- Position Sizing -->
+            <div class="studio-slider-group">
+              <div class="studio-slider-header">
+                <span style="color: var(--text-muted);">Position Sizing (% Margin per Trade):</span>
+                <strong id="studio-sizing-display" class="text-amber">15%</strong>
+              </div>
+              <input id="studio-sizing-slider" type="range" class="studio-slider" min="5" max="30" step="1" value="15" oninput="document.getElementById('studio-sizing-display').innerText = this.value + '%'">
+            </div>
+
+            <button class="btn btn-emerald" style="width: 100%; justify-content: center; font-weight: 700; padding: 8px;" onclick="saveStudioParameters()">
+              💾 Hot-Apply Parameters to Engine
+            </button>
+          </div>
+
+          <!-- Optimization Benchmarking Cards -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="background: rgba(255, 51, 102, 0.08); border: 1px solid rgba(255, 51, 102, 0.25); border-radius: var(--radius-sm); padding: 8px 10px;">
+              <div style="font-size: 0.7rem; color: var(--neon-rose); font-weight: 700;">BEFORE RETRAINING</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">
+                MAE: <strong>0.783%</strong><br>
+                Breakout Prec: <strong>0.00%</strong><br>
+                Fixed Universal Hurdle
+              </div>
+            </div>
+            <div style="background: rgba(0, 255, 136, 0.08); border: 1px solid rgba(0, 255, 136, 0.25); border-radius: var(--radius-sm); padding: 8px 10px;">
+              <div style="font-size: 0.7rem; color: var(--neon-emerald); font-weight: 700;">AFTER RETRAINING</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">
+                MAE: <strong>0.050% (-93.6%)</strong><br>
+                Breakout Prec: <strong>50.00%</strong><br>
+                Dynamic ATR Hurdle + 23 Feats
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Row 3: Today's Deep Session Audit Tables (Per-Stock & Exit Reasons) -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 1.5rem;">
+        
+        <!-- Per-Stock Session Performance -->
+        <div class="aftermarket-panel">
+          <div class="panel-header" style="margin-bottom: 0.75rem;">
+            <div class="panel-title" style="font-size: 0.95rem;">
+              📊 Per-Stock Trading Session Efficiency
+            </div>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Realized P&L breakdown by ticker</span>
+          </div>
+          <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+            <table class="trades-table" style="font-size: 0.75rem;">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Trades</th>
+                  <th>Win Rate</th>
+                  <th>Stop Losses</th>
+                  <th>Avg Net Return</th>
+                  <th>Net P&L (INR)</th>
+                </tr>
+              </thead>
+              <tbody id="am-stocks-tbody">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Exit Reason Distribution -->
+        <div class="aftermarket-panel">
+          <div class="panel-header" style="margin-bottom: 0.75rem;">
+            <div class="panel-title" style="font-size: 0.95rem;">
+              🎯 Exit Reason & Execution Quality Distribution
+            </div>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Target Hits vs Stop Loss slippage</span>
+          </div>
+          <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+            <table class="trades-table" style="font-size: 0.75rem;">
+              <thead>
+                <tr>
+                  <th>Exit Condition</th>
+                  <th>Trades</th>
+                  <th>Win Rate</th>
+                  <th>Total Net P&L (INR)</th>
+                </tr>
+              </thead>
+              <tbody id="am-reasons-tbody">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Mobile App Capital Adjustment Modal -->
+  <div id="app-capital-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div style="font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+          <span>💰</span> Manual Capital Adjustment
+        </div>
+        <button class="modal-close" onclick="closeAppCapitalModal()">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+        <div class="action-tab-group">
+          <button id="app-adjust-btn-deposit" class="btn btn-emerald active" onclick="selectAppAdjustAction('deposit')">➕ Deposit</button>
+          <button id="app-adjust-btn-withdraw" class="btn btn-outline" onclick="selectAppAdjustAction('withdraw')">➖ Withdraw</button>
+          <button id="app-adjust-btn-set" class="btn btn-outline" onclick="selectAppAdjustAction('set_capital')">🎯 Set Base</button>
+        </div>
+        <div>
+          <label id="app-adjust-amount-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 5px;">
+            AMOUNT (INR)
+          </label>
+          <input id="app-adjust-input" type="number" class="money-input" style="width: 100%; font-size: 1.1rem; padding: 10px;" placeholder="e.g. 25000" step="1000" min="1000">
+        </div>
+        <div>
+          <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px;">QUICK PRESETS:</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(1000)">₹1K</button>
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(5000)">₹5K</button>
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(10000)">₹10K</button>
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(25000)">₹25K</button>
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(50000)">₹50K</button>
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(100000)">₹100K</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 3px;">NOTE (OPTIONAL)</label>
+          <input id="app-adjust-note" type="text" class="money-input" style="width: 100%; font-size: 0.82rem;" placeholder="e.g. App Capital Adjustment">
+        </div>
+        <button id="app-adjust-submit-btn" class="btn btn-emerald" style="width: 100%; justify-content: center; padding: 10px; font-weight: 700;" onclick="submitAppCapitalAdjust()">
+          Confirm Capital Adjustment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  </main>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Client Application Script -->
+  <script src="/static/app.js"></script>
+</body>
+</html>

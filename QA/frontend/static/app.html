@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NSE 1-Min Prediction & Compounding Platform | Live Mobile App</title>
+  <meta name="description" content="Live Mobile Monitor for 1-minute NSE stock predictions and automated compounding execution.">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <style>
+    /* Native Mobile App Enhancements */
+    body {
+      background: #06090e;
+      color: #e2e8f0;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    .mobile-app-shell {
+      max-width: 580px;
+      margin: 0 auto;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .app-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: rgba(10, 16, 26, 0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .app-nav-pills {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .app-nav-link {
+      text-decoration: none;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .app-nav-link:hover {
+      color: #fff;
+      border-color: rgba(0, 240, 255, 0.4);
+    }
+    .app-nav-link.lab-link {
+      color: #c084fc;
+      border-color: rgba(168, 85, 247, 0.35);
+      background: rgba(168, 85, 247, 0.1);
+    }
+    .app-content-body {
+      padding: 0.85rem 0.85rem 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      flex: 1;
+    }
+    .signal-radar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    @media (max-width: 600px) {
+      .mobile-app-shell {
+        max-width: 100%;
+      }
+      .app-content-body {
+        padding: 0.6rem 0.6rem 2.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="mobile-app-shell">
+    
+    <!-- Top Mobile Navigation Bar -->
+    <header class="app-bar">
+      <div class="app-brand">
+        <div style="width: 26px; height: 26px; border-radius: 6px; background: linear-gradient(135deg, var(--neon-cyan), #00a8ff); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: #000; font-weight: 800; box-shadow: 0 0 10px rgba(0,240,255,0.4);">α</div>
+        <div>
+          <span>AlphaNSE</span>
+          <span class="badge-nse" style="font-size: 0.6rem; padding: 1px 5px; margin-left: 4px;">APP</span>
+        </div>
+      </div>
+
+      <!-- Mobile App Header Controls -->
+      <div class="app-nav-pills">
+        <button class="btn btn-outline" style="padding: 3px 7px; font-size: 0.7rem; border-color: rgba(255,255,255,0.15);" onclick="appState.audioEnabled = !appState.audioEnabled; showToast('Audio ' + (appState.audioEnabled ? 'Enabled 🔊' : 'Muted 🔇'))">
+          🔊
+        </button>
+      </div>
+    </header>
+
+    <!-- Sub-Header Live Market Telemetry Strip -->
+    <div style="background: rgba(6, 9, 14, 0.9); border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 5px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span id="market-session-badge" class="badge-nse" style="background: rgba(255, 51, 102, 0.15); color: var(--neon-rose); border-color: rgba(255, 51, 102, 0.35); font-size: 0.65rem; padding: 2px 6px;">
+          🔴 NSE STANDBY
+        </span>
+        <span style="color: var(--text-muted); font-size: 0.7rem;">09:15-15:30 IST</span>
+      </div>
+      <div class="pulse-status" style="margin: 0;">
+        <div id="ws-pulse" class="pulse-dot idle"></div>
+        <span id="ws-status-text" style="font-size: 0.68rem; font-family: var(--font-mono);">SYNCING...</span>
+      </div>
+    </div>
+
+    <!-- Live Scrolling Ticker Tape Across Indian Market Stocks -->
+    <div class="ticker-tape">
+      <div id="ticker-track" class="ticker-track">
+        <!-- Injected dynamically via app.js -->
+      </div>
+    </div>
+
+    <!-- Main Mobile Application Content Stream -->
+    <main class="app-content-body">
+
+      <!-- 1. Compounded Portfolio NAV Card -->
+      <div class="app-compounding-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div class="app-nav-label">Compounded Portfolio NAV</div>
+            <div id="app-nav-val" class="app-nav-val">₹1,00,000.00</div>
+          </div>
+          <button class="btn btn-emerald" style="font-size: 0.7rem; padding: 4px 10px; font-weight: 700; border-radius: var(--radius-sm);" onclick="openAppCapitalModal()">
+            💰 Adjust
+          </button>
+        </div>
+        <div class="app-comp-metrics" style="margin-top: 0.75rem;">
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.68rem;">Net Profit:</span>
+            <strong id="app-total-profit" class="text-emerald" style="display: block; font-size: 0.88rem;">+₹0.00</strong>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.68rem;">Compounding:</span>
+            <strong id="app-comp-mult" class="text-cyan" style="display: block; font-size: 0.88rem;">1.00x</strong>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.68rem;">Win Rate:</span>
+            <strong id="app-win-rate" class="text-amber" style="display: block; font-size: 0.88rem;">0.0%</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Capital & Treasury Portfolio Breakdown Table -->
+      <div class="app-capital-table-card">
+        <div class="app-section-title">
+          <span>💼 Capital & Treasury Portfolio</span>
+          <span class="badge-read-only" style="font-size: 0.65rem;">AUTO-COMPOUND</span>
+        </div>
+        <div class="app-metrics-table-wrapper">
+          <table class="app-metrics-table">
+            <tbody>
+              <tr>
+                <td class="lbl">Initial Capital:</td>
+                <td id="app-initial-capital" class="val text-cyan">₹1,00,000.00</td>
+              </tr>
+              <tr>
+                <td class="lbl">Total Capital:</td>
+                <td id="app-total-capital" class="val text-emerald">₹1,00,000.00</td>
+              </tr>
+              <tr>
+                <td class="lbl">Total Profit / Loss:</td>
+                <td id="app-net-pnl" class="val text-emerald">+₹0.00 (+0.00%)</td>
+              </tr>
+              <tr>
+                <td class="lbl">Invested Margin:</td>
+                <td id="app-invested-margin" class="val text-amber">₹0.00</td>
+              </tr>
+              <tr>
+                <td class="lbl">Available Cash:</td>
+                <td id="app-available-cash" class="val text-cyan">₹1,00,000.00</td>
+              </tr>
+              <tr>
+                <td class="lbl">Win Rate:</td>
+                <td id="app-winrate-table" class="val text-emerald">0.0%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3. Daily Trades Execution Target Ring (10-15 Target) -->
+      <div class="daily-target-card">
+        <div class="target-info">
+          <div class="target-title">Daily Trades Execution</div>
+          <div id="app-target-count" class="target-count">0 / 15</div>
+          <div style="font-size: 0.7rem; color: var(--text-muted);">Target: 10 to 15+ Trades/Day</div>
+        </div>
+        <div class="progress-ring-container">
+          <svg class="progress-ring" width="52" height="52">
+            <circle stroke="rgba(255,255,255,0.06)" stroke-width="4" fill="transparent" r="22" cx="26" cy="26" />
+            <circle id="progress-ring-circle" class="progress-ring-circle" stroke-width="4" stroke-dasharray="138.23" stroke-dashoffset="138.23" stroke-linecap="round" fill="transparent" r="22" cx="26" cy="26" />
+          </svg>
+          <div id="app-ring-pct" class="ring-label text-cyan">0%</div>
+        </div>
+      </div>
+
+      <!-- 4. Live Active Positions Card -->
+      <div class="app-positions-card">
+        <div class="app-section-title">
+          <span>⚡ Live Active Positions</span>
+          <span class="badge-nse">AUTO-MANAGED</span>
+        </div>
+        <div id="app-pos-list" class="app-pos-list">
+          <!-- Injected dynamically via app.js -->
+        </div>
+      </div>
+
+      <!-- 5. 1-Minute Live Signal Radar (Top Liquid NSE Stocks) -->
+      <div class="panel-card" style="padding: 0.85rem; margin-bottom: 0;">
+        <div class="signal-radar-header">
+          <div style="font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+            <span>🎯</span> 1-Min Prediction Radar
+          </div>
+          <span class="badge-live-pulse" style="font-size: 0.65rem;">1M LIVE</span>
+        </div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+          Tap any card to inspect high-frequency candlestick signals.
+        </div>
+        <div id="signals-grid" class="signals-grid">
+          <!-- Injected dynamically via app.js -->
+        </div>
+      </div>
+
+      <!-- 6. Real-Time Trades & Performance Stream -->
+      <div class="app-trades-card">
+        <div class="app-section-title">
+          <span>📜 Executed Trades</span>
+          <div class="app-tab-pills">
+            <button id="app-tab-table-btn" class="pill-btn active" onclick="switchAppTradeView('table')">📊 Table</button>
+            <button id="app-tab-feed-btn" class="pill-btn" onclick="switchAppTradeView('feed')">⚡ Feed</button>
+          </div>
+        </div>
+
+        <!-- Touch-scrollable App Trades Table -->
+        <div id="app-trades-table-container" class="app-table-scroll">
+          <table class="app-trades-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Symbol</th>
+                <th>Action</th>
+                <th>Invested</th>
+                <th>Profit / Loss</th>
+                <th>Status</th>
+                <th>Init Cap</th>
+                <th>Cap After</th>
+                <th>Win Rate</th>
+              </tr>
+            </thead>
+            <tbody id="app-trades-tbody">
+              <!-- Dynamically rendered via app.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Stream Feed (Toggleable) -->
+        <div id="app-stream-feed" class="stream-feed" style="display: none; max-height: 280px; overflow-y: auto; margin-top: 0.5rem;">
+          <!-- Dynamically rendered via app.js -->
+        </div>
+      </div>
+
+    </main>
+
+  </div> <!-- End of .mobile-app-shell -->
+
+  <!-- Mobile App Capital Adjustment Modal -->
+  <div id="app-capital-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div style="font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+          <span>💰</span> Capital Adjustment
+        </div>
+        <button class="modal-close" onclick="closeAppCapitalModal()">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+        <div class="action-tab-group">
+          <button id="app-adjust-btn-deposit" class="btn btn-emerald active" onclick="selectAppAdjustAction('deposit')">➕ Deposit</button>
+          <button id="app-adjust-btn-withdraw" class="btn btn-outline" onclick="selectAppAdjustAction('withdraw')">➖ Withdraw</button>
+          <button id="app-adjust-btn-set" class="btn btn-outline" onclick="selectAppAdjustAction('set_capital')">🎯 Set Base</button>
+        </div>
+        <div>
+          <label id="app-adjust-amount-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 5px;">
+            AMOUNT (INR)
+          </label>
+          <input id="app-adjust-input" type="number" class="money-input" style="width: 100%; font-size: 1.1rem; padding: 10px;" placeholder="e.g. 25000" step="1000" min="1000">
+        </div>
+        <div>
+          <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px;">QUICK PRESETS:</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(1000)">₹1K</button>
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(5000)">₹5K</button>
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(10000)">₹10K</button>
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(25000)">₹25K</button>
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(50000)">₹50K</button>
+            <button class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="setAppPreset(100000)">₹100K</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 3px;">NOTE (OPTIONAL)</label>
+          <input id="app-adjust-note" type="text" class="money-input" style="width: 100%; font-size: 0.82rem;" placeholder="e.g. App Capital Adjustment">
+        </div>
+        <button id="app-adjust-submit-btn" class="btn btn-emerald" style="width: 100%; justify-content: center; padding: 10px; font-weight: 700;" onclick="submitAppCapitalAdjust()">
+          Confirm Capital Adjustment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Client Application Script -->
+  <script src="/static/app.js"></script>
+</body>
+</html>

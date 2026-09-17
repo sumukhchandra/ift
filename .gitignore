@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Data and Logs
+data/processed/
+logs/
+*.log
+*.sqlite
+*.db
+*.zip
+*.parquet
+*.tsv
+*.json
+!QA/configs/*.json
+
+# Large model artifacts exceeding GitHub 100MB limit
+QA/models/saved_models/return_regressor_extratrees.joblib
+
+# IDEs
+.vscode/
+.idea/
+
+# CatBoost
+catboost_info/
+
+# OS
+.DS_Store
+Thumbs.db

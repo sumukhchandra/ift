@@ -1,0 +1,16 @@
+aiohttp
+websockets
+pandas
+numpy
+xgboost
+pyarrow
+matplotlib
+scikit-learn
+hmmlearn
+requests
+shap
+yfinance
+streamlit
+plotly
+pymongo
+python-dotenv
