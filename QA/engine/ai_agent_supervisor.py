@@ -40,6 +40,9 @@ class AIAgentSupervisor:
         self.active_plans: List[Dict[str, Any]] = []
         self.execution_history: List[Dict[str, Any]] = []
         self.last_sweep_time = None
+        self.is_retraining = False
+        self.last_retrain_time = 0.0
+        self.retrain_cooldown_seconds = 3600  # Minimum 1 hour between retraining runs
         self.telemetry_snapshot = {
             "web_desk": {},
             "mobile_app": {},
@@ -78,13 +81,13 @@ class AIAgentSupervisor:
         print(f"[AI-AGENT {now_str}] {message}")
 
     def _surveillance_loop(self):
-        """Periodically audits all 3 surfaces every 12 seconds."""
+        """Periodically audits all 3 surfaces every 30 seconds."""
         while self.running:
             try:
                 self.run_diagnostic_sweep()
             except Exception as e:
                 self._log_thought(f"Diagnostic sweep anomaly: {e}")
-            time.sleep(12)
+            time.sleep(30)
 
     def run_diagnostic_sweep(self) -> Dict[str, Any]:
         """Runs full audit across Web Treasury, Mobile App, and Simulation Lab."""
@@ -208,15 +211,16 @@ class AIAgentSupervisor:
         total_v = lab.get("total_verified", 0)
         whipsaws = lab.get("whipsaws_count", 0)
 
-        if total_v >= 10 and acc < 70.0:
+        time_since_retrain = time.time() - self.last_retrain_time
+        if total_v >= 30 and acc < 50.0 and not self.is_retraining and time_since_retrain >= self.retrain_cooldown_seconds:
             plans.append({
                 "id": "plan_retrain_ensemble",
                 "title": "Ensemble Recalibration & Live Retraining",
                 "category": "SIMULATION_LAB",
                 "urgency": "HIGH",
-                "description": f"Directional accuracy ({acc}%) is below the 70% threshold with {whipsaws} whipsaws. Trigger live retraining on recent session candles.",
+                "description": f"Directional accuracy ({acc}%) is below the 50% threshold with {whipsaws} whipsaws. Off-market manual retraining recommended.",
                 "action": "trigger_retrain",
-                "auto_executable": True,
+                "auto_executable": False,  # Safety: never auto-peg CPU during active trading
                 "executed": False
             })
         else:
@@ -232,15 +236,15 @@ class AIAgentSupervisor:
             })
 
         # Plan 2: Adaptive Hurdle / Volatility Filter
-        current_hurdle = getattr(self.trader, "profit_threshold_pct", 0.20) if self.trader else 0.20
-        if whipsaws > 3 and current_hurdle < 0.22:
+        current_hurdle = getattr(self.trader, "profit_threshold_pct", 0.0008) if self.trader else 0.0008
+        if whipsaws > 3 and current_hurdle < 0.0015:
             plans.append({
                 "id": "plan_raise_hurdle",
-                "title": "Hurdle Dynamic Adaptation (18 bps → 22 bps)",
+                "title": "Hurdle Dynamic Adaptation (8 bps → 15 bps)",
                 "category": "WEB_TREASURY",
                 "urgency": "MEDIUM",
-                "description": f"Observed {whipsaws} intra-bar whipsaws. Elevating profit hurdle to 0.22% to eliminate shallow noise trades.",
-                "action": "adjust_hurdle_22",
+                "description": f"Observed {whipsaws} intra-bar whipsaws. Elevating profit hurdle to 0.15% (15 bps) to eliminate shallow noise trades.",
+                "action": "adjust_hurdle_15",
                 "auto_executable": True,
                 "executed": False
             })
@@ -312,25 +316,42 @@ class AIAgentSupervisor:
 
         msg = f"Executed Autonomous Plan: {plan.get('title')}"
         if action == "trigger_retrain":
-            self._log_thought("[AUTONOMOUS ACTION] Launching live 1m model ensemble retraining...")
+            if self.is_retraining:
+                self._log_thought("[NOTICE] Retraining already running in background. Skipping duplicate trigger.")
+                return {"success": False, "message": "Retraining already in progress."}
+
+            time_since_retrain = time.time() - self.last_retrain_time
+            if time_since_retrain < self.retrain_cooldown_seconds:
+                wait_min = int((self.retrain_cooldown_seconds - time_since_retrain) / 60)
+                self._log_thought(f"[NOTICE] Retraining in cooldown. Please wait {wait_min}m.")
+                return {"success": False, "message": f"Retraining in cooldown. Wait {wait_min}m."}
+
             if self.trader:
-                # Trigger retrain in background
+                self.is_retraining = True
+                self._log_thought("[ACTION] Launching 1m model ensemble retraining in low-priority background thread...")
+
                 def _bg_train():
                     try:
                         import subprocess
                         script_path = os.path.join(PROJECT_ROOT, "scripts", "build_and_train_live_1m.py")
                         if os.path.exists(script_path):
-                            subprocess.run([sys.executable, script_path], cwd=PROJECT_ROOT, capture_output=True)
-                            self._log_thought("[OK] [AUTONOMOUS ACTION] Retraining finished. Models refreshed.")
+                            # Set BELOW_NORMAL_PRIORITY_CLASS on Windows so Chrome and PC remain responsive
+                            cflags = 0x00004000 if sys.platform == "win32" else 0
+                            subprocess.run([sys.executable, script_path], cwd=PROJECT_ROOT, capture_output=True, creationflags=cflags)
+                            self.last_retrain_time = time.time()
+                            self._log_thought("[OK] Retraining finished. Models refreshed.")
                     except Exception as err:
                         self._log_thought(f"[ERROR] Retraining sub-process error: {err}")
+                    finally:
+                        self.is_retraining = False
+
                 threading.Thread(target=_bg_train, daemon=True).start()
 
-        elif action == "adjust_hurdle_22":
+        elif action in ("adjust_hurdle_15", "adjust_hurdle_22"):
             if self.trader:
-                self.trader.profit_threshold_pct = 0.22
+                self.trader.profit_threshold_pct = 0.0012  # 12 bps (0.12%)
                 self.trader._save_state()
-            self._log_thought("[AUTONOMOUS ACTION] Hurdle recalibrated to 0.22% (22 bps) to filter volatility noise.")
+            self._log_thought("[AUTONOMOUS ACTION] Hurdle recalibrated to 0.12% (12 bps) to filter volatility noise.")
 
         elif action == "blacklist_stock":
             sym = plan.get("symbol")

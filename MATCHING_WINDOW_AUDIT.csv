@@ -1,0 +1,5 @@
+window_name,window_min_seconds,window_max_seconds,total_predictions,matched_outcomes,matched_percentage,excluded_predictions,excluded_percentage,unique_target_observations,reused_observations,mean_target_offset_seconds,median_target_offset_seconds,min_target_offset_seconds,max_target_offset_seconds,model_mae_bps,model_rmse_bps,model_bias_bps,zero_return_baseline_mae_bps,directional_accuracy_all_pct,directional_accuracy_non_flat_pct
+EXACT_60_SECOND_HORIZON,60,60,8394,1410,16.8,6984,83.2,1410,0,60.0,60.0,60.0,60.0,5.27,7.93,-2.3,4.63,51.63,55.53
+NARROW_TOLERANCE_55_65S,55,65,8394,8024,95.59,370,4.41,7884,140,57.65,56.0,55.0,65.0,13.89,17.7,-11.57,5.07,45.68,49.11
+CANONICAL_HISTORICAL_MATCHING_WINDOW_45_75S,45,75,8394,8262,98.43,132,1.57,8010,252,57.67,56.0,47.0,75.0,13.76,17.61,-11.44,5.06,45.75,49.21
+BROADER_DIAGNOSTIC_WINDOW_30_90S,30,90,8394,8346,99.43,48,0.57,8010,336,57.53,56.0,30.0,79.0,13.79,17.64,-11.48,5.06,45.69,49.18

@@ -12,13 +12,25 @@ env/
 data/processed/
 logs/
 *.log
+pid.txt
+*.pid
 *.sqlite
 *.db
 *.zip
 *.parquet
 *.tsv
+
+# Ignore scratch and runtime databases/reports
+scratch/
+reports/live/alphanse_local.db
+reports/live/alphanse_local.db*
+
+# Ignore general json but whitelist essential configs and model weights
 *.json
 !QA/configs/*.json
+!QA/models/saved_models_1m/*.json
+!v3/config/*.json
+!v3/models/multimodel/*.json
 
 # Large model artifacts exceeding GitHub 100MB limit
 QA/models/saved_models/return_regressor_extratrees.joblib

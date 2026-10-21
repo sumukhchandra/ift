@@ -1,0 +1,9 @@
+ledger_or_summary_file,session_or_date,mode,starting_capital_inr,ending_capital_inr,total_trades_reported,total_trades_recomputed,realized_pnl_reported,realized_pnl_recomputed,unrealized_pnl_inr,reconciliation_status,audit_finding
+reports/live/paper_trading_ledger.json,2026-10-17 / LIVE_SESSION,PAPER_TESTING (CASH_EQUITY),1500.0,1500.0,0,0,0.0,0.0,0.0,EXACT_MATCH (ZERO_TRADES),"Bankroll perfectly preserved at ₹1,500.00; EdgeFrictionGate blocked negative expectancy trades"
+reports/oct16_readiness/TRADE_LEDGER.csv,2026-10-16 Target Session,CASH_EQUITY,1500.0,1500.0,0,0,0.0,0.0,0.0,EXACT_MATCH (ZERO_TRADES),Canonical ledger file has 0 rows; 0 trades executed
+reports/live/paper_intraday_summary_cash_only.json,2026-10-09,"CASH-ONLY (NO MARGIN, NO SHORT SELLING)",1500.0,1500.0,0,0,0.0,0.0,0.0,EXACT_MATCH (ZERO_TRADES),Zero trades permitted under strict cash-only constraints; all signals rejected
+reports/live/paper_intraday_summary_mis.json,2026-10-09 (Historical Replay),INTRADAY MIS (MARGIN SHORTING REPLAY),1500.0,1497.58,5,5,-2.42,-2.42,0.0,EXACT_MATCH (HISTORICAL_REPLAY),5 simulated trades in MIS backtest replay resulting in -₹2.42 P&L due to friction
+reports/live/options_paper_ledger.json,2026-10-14,OPTIONS_PAPER,1500.0,1500.0,0,0,0.0,0.0,0.0,EXACT_MATCH (ZERO_TRADES),"Zero option contracts traded; bankroll remains ₹1,500.00"
+reports/live/orders_stream.jsonl,2026-10-13 to 2026-10-17 Cumulative,EVENT_STREAM,1500.0,1500.0,0,0,0.0,0.0,0.0,EXACT_MATCH (ZERO_LIVE_ORDERS),"All 9,300+ events in orders_stream are telemetry (DATA_FRESHNESS, HEARTBEAT, FAILOVER), zero broker orders"
+reports/live/paper_trading_ledger.json,2026-10-20 / TARGET_SESSION,PAPER_TESTING (CASH_EQUITY),1500.0,1500.0,0,0,0.0,0.0,0.0,EXACT_MATCH (ZERO_TRADES),"Bankroll preserved at ₹1,500.00; zero simulated trades permitted due to sub-random model alpha and edge friction gate"
+

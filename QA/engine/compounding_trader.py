@@ -22,13 +22,23 @@ import yfinance as yf
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
-    sys.path.append(PROJECT_ROOT)
+    sys.path.insert(0, PROJECT_ROOT)
 
-from stocks_config import STOCK_SYMBOLS, STOCK_UNIVERSE, DEFAULT_CAPITAL, STOCK_BLACKLIST
-from risk.india_tax_engine import IndiaTaxEngine
-from models.one_min_predictor import OneMinPredictor
-from models.stock_confidence_tracker import StockConfidenceTracker
-from regimes.regime_classifier import classify_micro_regime
+try:
+    from QA.risk.india_tax_engine import IndiaTaxEngine
+except ImportError:
+    from risk.india_tax_engine import IndiaTaxEngine
+
+try:
+    from QA.stocks_config import STOCK_SYMBOLS, STOCK_UNIVERSE, DEFAULT_CAPITAL, STOCK_BLACKLIST
+    from QA.models.one_min_predictor import OneMinPredictor
+    from QA.models.stock_confidence_tracker import StockConfidenceTracker
+    from QA.regimes.regime_classifier import classify_micro_regime
+except ImportError:
+    from stocks_config import STOCK_SYMBOLS, STOCK_UNIVERSE, DEFAULT_CAPITAL, STOCK_BLACKLIST
+    from models.one_min_predictor import OneMinPredictor
+    from models.stock_confidence_tracker import StockConfidenceTracker
+    from regimes.regime_classifier import classify_micro_regime
 
 STATE_DIR = os.path.join(PROJECT_ROOT, "logs")
 os.makedirs(STATE_DIR, exist_ok=True)
@@ -49,11 +59,18 @@ class CompoundingTrader:
         self.worker_thread = None
         self.subscribers = []  # WebSocket callbacks
 
-        # Strategy parameters
-        self.profit_threshold_pct = 0.0008   # 0.08% (8 bps) minimum expected profit hurdle — lowered to match model output range
-        self.stop_loss_pct = 0.003            # 0.3% stop loss
-        self.position_sizing_pct = 0.15       # 15% of available capital per trade
-        self.target_daily_trades = 15         # Target 10-15+ trades per day
+        # Strategy parameters - Calibrated for 100% Own-Capital Spot Compounding (Zero Leverage)
+        # SIMULATION v2 RESULT: Single trade needs 7.18% gross OR two trades 3.5%+4.0% gross to hit 5% net account
+        self.target_session_profit_pct = 0.05 # 5.0% session net profit target (Daily Compounding Lock)
+        self.take_profit_target_pct = 0.035   # 3.5% net profit take-profit hurdle (per trade exit target)
+        self.profit_threshold_pct = 0.0010    # 0.10% (10 bps) predicted 1-minute hurdle (entry signal trigger)
+        self.stop_loss_pct = 0.007            # 0.7% stop loss (Reward-to-Risk = 5.0 : 1)
+        self.trailing_stop_activation_pct = 0.015 # At +1.5% gain, activate dynamic trailing stop
+        self.trailing_stop_lock_pct = 0.005   # Lock in +0.5% net minimum (above friction) when trailing triggers
+        self.position_sizing_pct = 0.95       # 95% single-runner concentration for full capital deployment
+        self.max_concurrent_positions = 1     # 1 concentrated high-conviction runner at a time (no idle cash drag)
+        self.max_hold_seconds = 7200          # 120 minutes (2hrs) max holding — wider window for 3.5-7% swings
+        self.target_daily_trades = 2          # Max 2 high-conviction trades per session (less churn)
         self.simulation_speed_sec = 2.0       # Candle tick frequency in simulation mode
         self.off_market_simulation = False    # By default, do NOT simulate ticks when NSE is closed; freeze in standby
 
@@ -97,6 +114,11 @@ class CompoundingTrader:
                 if self.state.get("last_trade_date") != today_str:
                     self.state["last_trade_date"] = today_str
                     self.state["daily_trades_count"] = 0
+                    self.state["session_starting_capital"] = self.state.get("total_capital", starting_capital)
+                    self.state["session_realized_net_pnl"] = 0.0
+                    self.state["session_return_pct"] = 0.0
+                    if self.state.get("engine_status") == "SESSION_TARGET_ACHIEVED":
+                        self.state["engine_status"] = "RUNNING"
                     self.candles_cache.clear()
                 self._save_state()
                 return
@@ -113,6 +135,10 @@ class CompoundingTrader:
             "total_tax_paid": 0.0,
             "total_brokerage_paid": 0.0,
             "compounding_multiplier": 1.0,
+            "session_starting_capital": starting_capital,
+            "session_realized_net_pnl": 0.0,
+            "session_return_pct": 0.0,
+            "target_session_profit_pct": self.target_session_profit_pct * 100,
             "daily_trades_count": 0,
             "target_daily_trades": self.target_daily_trades,
             "winning_trades": 0,
@@ -168,6 +194,11 @@ class CompoundingTrader:
             if self.state.get("last_trade_date") != today_str:
                 self.state["last_trade_date"] = today_str
                 self.state["daily_trades_count"] = 0
+                self.state["session_starting_capital"] = self.state.get("total_capital", 0.0)
+                self.state["session_realized_net_pnl"] = 0.0
+                self.state["session_return_pct"] = 0.0
+                if self.state.get("engine_status") == "SESSION_TARGET_ACHIEVED":
+                    self.state["engine_status"] = "RUNNING"
                 self.candles_cache.clear()
                 self._save_state()
 
@@ -193,7 +224,11 @@ class CompoundingTrader:
             "next_market_open": next_open,
             "market_mode": "LIVE_NSE_MARKET" if is_open else "OFF_MARKET_STANDBY",
             "auto_trade_from_tomorrow": True,
-            "engine_status": self.state["engine_status"]
+            "engine_status": self.state["engine_status"],
+            "session_target_profit_pct": self.target_session_profit_pct * 100,
+            "session_return_pct": self.state.get("session_return_pct", 0.0),
+            "session_realized_net_pnl": self.state.get("session_realized_net_pnl", 0.0),
+            "session_target_achieved": self.state.get("engine_status") == "SESSION_TARGET_ACHIEVED"
         }
 
     def _save_state(self):
@@ -306,7 +341,8 @@ class CompoundingTrader:
         """Update trading parameters dynamically."""
         with self.lock:
             if "profit_threshold_pct" in settings:
-                self.profit_threshold_pct = max(0.001, float(settings["profit_threshold_pct"]))
+                val = float(settings["profit_threshold_pct"])
+                self.profit_threshold_pct = val / 100.0 if val > 0.01 else max(0.0005, val)
             if "stop_loss_pct" in settings:
                 self.stop_loss_pct = max(0.001, float(settings["stop_loss_pct"]))
             if "position_sizing_pct" in settings:
@@ -349,10 +385,12 @@ class CompoundingTrader:
                             else:
                                 continue
                         else:
-                            continue
-                        sym_df.columns = [str(c).lower() for c in sym_df.columns]
+                            sym_df = raw_df.copy()
                         sym_df = sym_df.reset_index()
+                        sym_df.columns = [str(c).lower() for c in sym_df.columns]
                         time_col = "datetime" if "datetime" in sym_df.columns else "date" if "date" in sym_df.columns else "index"
+                        if time_col not in sym_df.columns and "timestamp" not in sym_df.columns:
+                            time_col = sym_df.columns[0]
                         sym_df = sym_df.rename(columns={time_col: "timestamp"})
                         sym_df["symbol"] = symbol
                         sym_df = sym_df.dropna(subset=["open", "high", "low", "close"])
@@ -386,6 +424,21 @@ class CompoundingTrader:
                     return df
             except Exception as e:
                 print(f"Live NSE fetch failed for {symbol}: {e}. Falling back.")
+
+        # Check local historical/weekend dataset first before attempting slow external fetch
+        short_sym = symbol.replace(".NS", "")
+        local_csv = os.path.join(PROJECT_ROOT, "data", f"{short_sym}_1m_weekend.csv")
+        if os.path.exists(local_csv):
+            try:
+                df = pd.read_csv(local_csv)
+                if not df.empty and len(df) >= 20:
+                    df["symbol"] = symbol
+                    df["timestamp"] = pd.to_datetime(df["timestamp"])
+                    df = df.dropna(subset=["open", "high", "low", "close"]).sort_values("timestamp")
+                    self.candles_cache[symbol] = df
+                    return df
+            except Exception:
+                pass
 
         try:
             df = yf.download(symbol, period="5d", interval="1m", progress=False, threads=False)
@@ -462,6 +515,11 @@ class CompoundingTrader:
             if self.state.get("last_trade_date") != today_str:
                 self.state["last_trade_date"] = today_str
                 self.state["daily_trades_count"] = 0
+                self.state["session_starting_capital"] = self.state.get("total_capital", 0.0)
+                self.state["session_realized_net_pnl"] = 0.0
+                self.state["session_return_pct"] = 0.0
+                if self.state.get("engine_status") == "SESSION_TARGET_ACHIEVED":
+                    self.state["engine_status"] = "RUNNING"
                 self.candles_cache.clear()  # Purge yesterday's cache to pull fresh live opening candles
 
             # Intraday Auto-Square-Off at 3:20 PM IST
@@ -471,8 +529,8 @@ class CompoundingTrader:
                     candles = self.get_or_generate_candles(symbol)
                     latest_p = float(candles.iloc[-1]["close"])
                     pos = self.state["positions"][symbol]
-                    gross_ret = (latest_p - pos["entry_price"]) / pos["entry_price"]
-                    act = self._close_position(symbol, latest_p, gross_ret, "MARKET_CLOSE_SQUAREOFF")
+                    # direction-aware gross_return (handled inside _close_position)
+                    act = self._close_position(symbol, latest_p, 0.0, "MARKET_CLOSE_SQUAREOFF")
                     if act:
                         executed_actions.append(act)
 
@@ -482,7 +540,13 @@ class CompoundingTrader:
                 candles = self.get_or_generate_candles(symbol)
                 latest_p = float(candles.iloc[-1]["close"])
                 entry_p = pos["entry_price"]
-                gross_ret = (latest_p - entry_p) / entry_p
+                direction = pos.get("direction", "LONG")
+
+                # Direction-aware gross return for cost estimation
+                if direction == "SHORT":
+                    gross_ret = (entry_p - latest_p) / entry_p  # positive when price falls
+                else:
+                    gross_ret = (latest_p - entry_p) / entry_p  # positive when price rises
 
                 # Update current price & unrealized P&L
                 cost_est = self.tax_engine.calculate_total_cost(pos["invested"], gross_ret)
@@ -491,6 +555,22 @@ class CompoundingTrader:
                 pos["unrealized_net_pnl"] = round(cost_est["net_profit"], 2)
                 pos["unrealized_net_ret_pct"] = round(cost_est["net_return_pct"], 3)
 
+                # Track best price achieved during hold for trailing stop
+                if direction == "SHORT":
+                    # SHORT: profit when price drops — track lowest price (best short profit)
+                    if "lowest_price" not in pos or latest_p < pos["lowest_price"]:
+                        pos["lowest_price"] = latest_p
+                    best_p = pos.get("lowest_price", latest_p)
+                    max_gain_pct = (entry_p - best_p) / entry_p if entry_p > 0 else 0.0
+                    pullback_from_peak_pct = (latest_p - best_p) / entry_p if entry_p > 0 else 0.0
+                else:
+                    # LONG: profit when price rises — track highest price
+                    if "highest_price" not in pos or latest_p > pos["highest_price"]:
+                        pos["highest_price"] = latest_p
+                    best_p = pos.get("highest_price", latest_p)
+                    max_gain_pct = (best_p - entry_p) / entry_p if entry_p > 0 else 0.0
+                    pullback_from_peak_pct = (best_p - latest_p) / best_p if best_p > 0 else 0.0
+
                 entry_time_str = pos.get("entry_time", now_str)
                 try:
                     entry_dt = datetime.fromisoformat(entry_time_str)
@@ -498,17 +578,23 @@ class CompoundingTrader:
                 except Exception:
                     seconds_held = 0.0
 
-                # Exit Condition A: Stop-loss breached (-0.30%)
+                # Exit Condition A: Hard Stop-Loss
+                # LONG: price rose against us (-0.7%). SHORT: price rose against us (also -0.7% gross).
                 if gross_ret <= -self.stop_loss_pct:
                     action = self._close_position(symbol, latest_p, gross_ret, "STOP_LOSS")
                     executed_actions.append(action)
-                # Exit Condition B: Target profit reached (+0.20% net profit target or higher)
-                elif cost_est["net_profit"] > 0 and cost_est["net_return_pct"] >= (self.profit_threshold_pct * 100):
+                # Exit Condition B: Take-Profit Target (3.5% net)
+                elif cost_est["net_profit"] > 0 and cost_est["net_return_pct"] >= (self.take_profit_target_pct * 100):
                     action = self._close_position(symbol, latest_p, gross_ret, "TAKE_PROFIT_TARGET")
                     executed_actions.append(action)
-                # Exit Condition C: Scalp time timeout after holding for at least 8 minutes (480s) to avoid multi-hour drift
-                elif seconds_held >= 480:
-                    exit_type = "TIME_SCALP_PROFIT" if cost_est["net_profit"] > 0 else "TIME_STOP_TIMEOUT"
+                # Exit Condition C: Dynamic Trailing Stop Ratchet
+                # Activated when best gain >= 1.5%; exit if it reverses 0.35% from peak
+                elif max_gain_pct >= self.trailing_stop_activation_pct and pullback_from_peak_pct >= 0.0035 and cost_est["net_profit"] > 0:
+                    action = self._close_position(symbol, latest_p, gross_ret, "TRAILING_STOP_PROFIT_LOCK")
+                    executed_actions.append(action)
+                # Exit Condition D: Max Holding Time (120 minutes)
+                elif seconds_held >= self.max_hold_seconds:
+                    exit_type = "TIME_EXPIRATION_PROFIT" if cost_est["net_profit"] > 0 else "TIME_EXPIRATION_TIMEOUT"
                     action = self._close_position(symbol, latest_p, gross_ret, exit_type)
                     executed_actions.append(action)
 
@@ -584,9 +670,34 @@ class CompoundingTrader:
                 pred["stock_accuracy_pct"] = stock_prof["directional_accuracy_pct"]
                 pred["stock_tier"] = stock_prof["tier"]
 
-                # If blacklisted, suppress BUY signal to enforce capital preservation
-                if is_symbol_blacklisted and pred["signal"] == "BUY":
+                # SMC 4-Confirmation & 9:20 Confluence Tagging (Model 06 Integration)
+                try:
+                    from v3.models.smc_straddle_model import SMC4ConfStraddleEngine
+                    if len(candles) >= 15:
+                        smc_eng = SMC4ConfStraddleEngine()
+                        smc_status = smc_eng.evaluate_smc_confirmations(candles)
+                        pred["smc_setup_quality"] = smc_status.setup_quality
+                        pred["smc_sweep"] = smc_status.c1_liquidity_sweep
+                        pred["smc_choch"] = smc_status.c2_choch
+                        pred["smc_ob"] = smc_status.c3_order_block
+                        pred["smc_fvg"] = smc_status.c4_fvg
+                        pred["smc_vwap_filter"] = smc_status.f1_vwap_filter
+                        pred["smc_ema9_filter"] = smc_status.f2_ema9_filter
+                        if smc_status.all_4_confirmations:
+                            pred["confidence"] = min(99.0, round(pred["confidence"] * 1.15, 1))
+                            pred["smc_confluence"] = "FULL_4_CONF"
+                        elif smc_status.hq_3_confirmation:
+                            pred["confidence"] = min(99.0, round(pred["confidence"] * 1.08, 1))
+                            pred["smc_confluence"] = "HQ_3_CONF"
+                        else:
+                            pred["smc_confluence"] = "NONE"
+                except Exception:
+                    pred["smc_confluence"] = "UNAVAILABLE"
+
+                # If blacklisted, suppress ALL signals to enforce capital preservation
+                if is_symbol_blacklisted and pred["signal"] in ("BUY", "SELL"):
                     pred["signal"] = "HOLD"
+                    pred["direction"] = "FLAT"
                     pred["suppressed_reason"] = f"Blacklisted ({stock_prof['reason']})"
 
                 signals.append(pred)
@@ -601,39 +712,42 @@ class CompoundingTrader:
                     "predicted_price_1m": pred["predicted_price_1m"],
                     "predicted_return_pct": pred["predicted_return_pct"],
                     "signal": pred["signal"],
+                    "direction": pred.get("direction", "FLAT"),
                     "confidence": pred["confidence"],
                     "profit_threshold_pct": pred["profit_threshold_pct"]
                 }
 
-                # Check if we should invest
-                # Criteria:
-                # - Signal is BUY (predicted 1-min return >= profit_threshold_pct e.g. 0.8%)
-                # - Stock is NOT blacklisted (direction accuracy >= 50% hurdle)
-                # - Regime supports long scalps (no counter-trend buying in bear or extreme volatility)
-                # - Not currently holding this symbol
-                # - Opening Cool-off: No new entries in first 5 mins (09:15 - 09:20 IST) to avoid whipsaw
-                # - Position count limit (max 5 simultaneous positions to manage risk)
-                # - Sizing calibrated for small accounts (min ₹350 for accounts <= 10k)
+                # Gate checks apply to BOTH long (BUY) and short (SELL) entries
                 in_cooldown = False
                 if symbol in self.last_exit_times:
                     if (now - self.last_exit_times[symbol]).total_seconds() < 300:
                         in_cooldown = True
 
                 opening_cooloff = (now.hour == 9 and now.minute < 20) if self.is_market_open() else False
-                min_cap_req = 350.0 if self.state["total_capital"] <= 10000.0 else 1000.0
+                min_cap_req = 100.0
                 allows_scalp = regime_info.get("allows_long_scalp", True)
+                session_target_met = (self.state.get("engine_status") == "SESSION_TARGET_ACHIEVED")
 
-                if (
-                    pred["signal"] == "BUY"
-                    and not is_symbol_blacklisted
-                    and allows_scalp
+                can_enter = (
+                    not is_symbol_blacklisted
                     and not opening_cooloff
                     and not in_cooldown
+                    and not session_target_met
                     and symbol not in self.state["positions"]
-                    and len(self.state["positions"]) < 5
+                    and len(self.state["positions"]) < self.max_concurrent_positions
                     and self.state["available_capital"] >= min_cap_req
-                ):
-                    action = self._open_position(pred)
+                )
+
+                # LONG entry: BUY when price expected to RISE
+                if pred["signal"] == "BUY" and allows_scalp and can_enter:
+                    action = self._open_position(pred, direction="LONG")
+                    if action:
+                        executed_actions.append(action)
+
+                # SHORT entry: SELL when price expected to FALL
+                # NSE intraday short selling: sell now, buy back same session
+                elif pred["signal"] == "SELL" and can_enter:
+                    action = self._open_position(pred, direction="SHORT")
                     if action:
                         executed_actions.append(action)
 
@@ -661,29 +775,31 @@ class CompoundingTrader:
             self._notify_subscribers("TICK_UPDATE", result)
             return result
 
-    def _open_position(self, pred: dict) -> dict:
-        """Open a position sizing dynamically based on compounded available capital."""
+    def _open_position(self, pred: dict, direction: str = "LONG") -> dict:
+        """
+        Open a LONG or SHORT position.
+        LONG:  BUY now, SELL later when price rises.
+        SHORT: SELL now (intraday short), BUY back when price falls.
+               NSE allows same-day short selling on all liquid NSE stocks.
+        """
         symbol = pred["symbol"]
         curr_price = pred["current_price"]
 
-        # Risk Filter for Small Accounts (<= 10,000 INR):
-        # A single share must not exceed 25% of total capital (e.g. max ~₹1,250 on a ₹5,000 account)
-        # Prevents taking heavy concentration in expensive stocks like TCS or Bharti Airtel
-        if self.state["total_capital"] <= 10000.0 and curr_price > (self.state["total_capital"] * 0.25):
+        if self.state["available_capital"] < curr_price:
             return None
 
-        # Dynamic Sizing: Allocate e.g. 15% of available compounded capital
+        # Allocate up to 95% of available capital for full momentum deployment
         invest_amount = self.state["available_capital"] * self.position_sizing_pct
-        min_invest = min(self.state["available_capital"], 350.0) if self.state["total_capital"] <= 10000.0 else 1000.0
-        if invest_amount < min_invest:
-            invest_amount = min(self.state["available_capital"], min_invest)
-
         qty = int(invest_amount / curr_price)
-        if qty < 1:
+        if qty < 1 and self.state["available_capital"] >= curr_price:
             qty = 1
-        actual_invested = qty * curr_price
 
+        actual_invested = qty * curr_price
         if actual_invested > self.state["available_capital"]:
+            qty = int(self.state["available_capital"] / curr_price)
+            actual_invested = qty * curr_price
+
+        if qty < 1 or actual_invested <= 0:
             return None
 
         self.state["available_capital"] -= actual_invested
@@ -692,8 +808,11 @@ class CompoundingTrader:
         pos = {
             "symbol": symbol,
             "company": pred["company"],
+            "direction": direction,           # "LONG" or "SHORT"
             "entry_price": curr_price,
             "current_price": curr_price,
+            "highest_price": curr_price,     # for LONG trailing stop: best price seen
+            "lowest_price": curr_price,      # for SHORT trailing stop: best (lowest) price seen
             "qty": qty,
             "invested": actual_invested,
             "entry_time": datetime.now().isoformat(),
@@ -705,9 +824,11 @@ class CompoundingTrader:
         }
         self.state["positions"][symbol] = pos
 
+        entry_action = "SHORT_SELL" if direction == "SHORT" else "BUY"
         trade_event = {
             "id": f"TRD-{int(time.time()*1000)}",
-            "action": "BUY",
+            "action": entry_action,
+            "direction": direction,
             "symbol": symbol,
             "company": pred["company"],
             "price": curr_price,
@@ -715,7 +836,7 @@ class CompoundingTrader:
             "invested": actual_invested,
             "predicted_return_pct": pred["predicted_return_pct"],
             "confidence": pred["confidence"],
-            "reason": f"Pred Return {pred['predicted_return_pct']}% > {pred['profit_threshold_pct']}%",
+            "reason": f"{direction} | Pred Return {pred['predicted_return_pct']}% vs thresh {pred['profit_threshold_pct']}%",
             "starting_capital": round(self.state["starting_capital"], 2),
             "capital_after": round(self.state["total_capital"], 2),
             "win_rate_pct": self.state["win_rate_pct"],
@@ -725,12 +846,23 @@ class CompoundingTrader:
         return trade_event
 
     def _close_position(self, symbol: str, exit_price: float, gross_return: float, reason: str) -> dict:
-        """Close position and compound net profit/loss into available capital."""
+        """
+        Close LONG or SHORT position and compound net profit/loss.
+        For SHORT: gross_return = (entry_price - exit_price) / entry_price  (positive when price fell)
+        """
         pos = self.state["positions"].pop(symbol, None)
         if not pos:
             return None
 
         self.last_exit_times[symbol] = datetime.now()
+
+        direction = pos.get("direction", "LONG")
+        entry_p = pos["entry_price"]
+        # Recalculate gross_return based on direction to ensure correctness
+        if direction == "SHORT":
+            gross_return = (entry_p - exit_price) / entry_p  # profit when price drops
+        else:
+            gross_return = (exit_price - entry_p) / entry_p  # profit when price rises
 
         invested = pos["invested"]
         cost_breakdown = self.tax_engine.calculate_total_cost(invested, gross_return)
@@ -744,6 +876,16 @@ class CompoundingTrader:
         self.state["available_capital"] += realized_capital
         self.state["invested_capital"] -= invested
         self.state["total_capital"] = self.state["available_capital"] + self.state["invested_capital"]
+
+        # Track session PnL & Daily 5% Target Lock
+        self.state["session_realized_net_pnl"] = round(self.state.get("session_realized_net_pnl", 0.0) + net_profit, 2)
+        sess_start_cap = self.state.get("session_starting_capital", self.state["total_capital"] - net_profit)
+        if sess_start_cap > 0:
+            session_ret_pct = self.state["session_realized_net_pnl"] / sess_start_cap
+            self.state["session_return_pct"] = round(session_ret_pct * 100, 2)
+            if session_ret_pct >= self.target_session_profit_pct:
+                self.state["engine_status"] = "SESSION_TARGET_ACHIEVED"
+                print(f"🎯 [TARGET HIT] 5.0% Daily Compounding Target Reached (+{session_ret_pct*100:.2f}%)! Capital locked in vault for tomorrow.")
 
         # Aggregate profit tracking
         self.state["total_net_profit"] += net_profit
@@ -770,9 +912,12 @@ class CompoundingTrader:
         if len(self.state["compounding_curve"]) > 100:
             self.state["compounding_curve"] = self.state["compounding_curve"][-100:]
 
+        direction = pos.get("direction", "LONG")
+        close_action = "BUY_COVER" if direction == "SHORT" else "SELL"
         trade_event = {
             "id": f"TRD-{int(time.time()*1000)}",
-            "action": "SELL",
+            "action": close_action,
+            "direction": direction,
             "symbol": symbol,
             "company": pos["company"],
             "entry_price": pos["entry_price"],
@@ -851,40 +996,15 @@ class CompoundingTrader:
     # -------------------------------------------------------------------------
 
     def start_engine(self):
-        """Start the automated scanning and compounding loop."""
-        if self.is_running:
-            return
-        self.is_running = True
-        self.state["engine_status"] = "RUNNING"
+        """Start the automated scanning and compounding loop.
+        RETIRED / FROZEN: Operational background execution loop disabled.
+        Authoritative orchestrator is now AlphaNSE Unified Ensemble.
+        """
+        self.is_running = False
+        self.state["engine_status"] = "FROZEN_ARCHIVE"
         self._save_state()
-
-        def _loop():
-            while self.is_running:
-                sleep_interval = 12.0
-                try:
-                    if self.is_market_open():
-                        # Live market: fetch real-time 1m candles from NSE
-                        self._fetch_all_live_candles()
-                        self.scan_and_trade_step()
-                        sleep_interval = 12.0
-                    else:
-                        # Off-market hours (NSE closed 15:30 - 09:15 IST)
-                        if self.off_market_simulation:
-                            self._simulate_market_tick()
-                            self.scan_and_trade_step()
-                            sleep_interval = self.simulation_speed_sec
-                        else:
-                            # Strict Standby: keep prices frozen at official close, no simulated trades
-                            self.check_day_rollover()
-                            sleep_interval = 10.0
-                except Exception as e:
-                    print(f"Error in engine loop: {e}")
-                    sleep_interval = 10.0
-
-                time.sleep(sleep_interval)
-
-        self.worker_thread = threading.Thread(target=_loop, daemon=True)
-        self.worker_thread.start()
+        print("[RETIRED] CompoundingTrader background loop disabled. Authoritative orchestrator: AlphaNSE Unified Ensemble.")
+        return
 
     def pause_engine(self):
         """Pause the automated engine."""

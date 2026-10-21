@@ -250,6 +250,18 @@ def get_compounding_curve():
     """Return historical compounding NAV points."""
     return {"curve": trader.state.get("compounding_curve", [])}
 
+@app.get("/api/models/leaderboard")
+def get_model_leaderboard(date: str = "20260928"):
+    """Return independent model tournament leaderboard and individual model trade results."""
+    board_path = os.path.join(PROJECT_ROOT, "..", "v3", "reports", "daily_orchestrator", date, "MODEL_INDEPENDENT_LEADERBOARD.json")
+    if os.path.exists(board_path):
+        try:
+            with open(board_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            return {"error": f"Failed to read leaderboard: {e}"}
+    return {"message": f"No leaderboard artifact found for date {date}"}
+
 @app.get("/api/adjustments")
 def get_adjustments():
     """Return history of manual deposits and withdrawals."""
@@ -416,32 +428,41 @@ def get_model_metrics():
 @app.post("/api/model/retrain_live")
 def trigger_retrain_live():
     """Launches full retraining with real 1m candles in background and hot-reloads models."""
+    if ai_supervisor.is_retraining:
+        return {"success": False, "message": "Retraining already in progress. Please wait."}
+
     import threading
+    ai_supervisor.is_retraining = True
+
     def _run():
         try:
             import subprocess
             cmd = [sys.executable, os.path.join(PROJECT_ROOT, "scripts", "build_and_train_live_1m.py")]
-            res = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True)
+            cflags = 0x00004000 if sys.platform == "win32" else 0
+            res = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, creationflags=cflags)
             print("[Retrain Live] Finished with code:", res.returncode)
             from models.one_min_predictor import OneMinPredictor
             trader.predictor = OneMinPredictor()
             # Also regenerate predictions
             cmd2 = [sys.executable, os.path.join(PROJECT_ROOT, "scripts", "predict_universe_offmarket.py")]
-            subprocess.run(cmd2, cwd=PROJECT_ROOT, capture_output=True, text=True)
+            subprocess.run(cmd2, cwd=PROJECT_ROOT, capture_output=True, text=True, creationflags=cflags)
             print("[Retrain Live] Models and Predictions refreshed successfully.")
         except Exception as e:
             print(f"[Retrain Live] Error: {e}")
+        finally:
+            ai_supervisor.is_retraining = False
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()
-    return {"success": True, "message": "Overnight 1-minute ML retraining and optimization launched in background."}
+    return {"success": True, "message": "1-minute ML retraining launched safely in background with low CPU priority."}
 
 @app.post("/api/model/tune_parameters")
 def tune_parameters(req: ModelTuneRequest):
     """Adjusts intraday efficiency parameters and hot-applies to engine."""
     with trader.lock:
         if req.profit_threshold_pct is not None:
-            trader.profit_threshold_pct = max(0.001, float(req.profit_threshold_pct))
+            val = float(req.profit_threshold_pct)
+            trader.profit_threshold_pct = val / 100.0 if val > 0.01 else max(0.0005, val)
         if req.stop_loss_pct is not None:
             trader.stop_loss_pct = max(0.001, float(req.stop_loss_pct))
         if req.position_sizing_pct is not None:

@@ -1,0 +1,21 @@
+metric,value
+session_date,2026-10-15
+account_mode,PAPER_TRADING_SHADOW_MODE
+starting_capital_inr,1500.00
+ending_capital_inr,1500.00
+gross_realized_pnl_inr,0.00
+statutory_fees_inr,0.00
+brokerage_inr,0.00
+estimated_slippage_inr,0.00
+total_friction_inr,0.00
+net_realized_pnl_inr,0.00
+return_on_capital_pct,0.00%
+max_intraday_drawdown_inr,0.00
+daily_loss_limit_inr,30.00
+loss_limit_hit,FALSE
+total_trades_count,0
+winning_trades_count,0
+losing_trades_count,0
+win_rate_pct,N/A (Zero Trades)
+active_positions_count,0
+unrealized_pnl_inr,0.00

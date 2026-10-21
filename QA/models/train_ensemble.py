@@ -16,8 +16,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from validation.purged_cv import PurgedWalkForwardCV
 
 class ModelEnsemble:
-    def __init__(self, model_dir='models/saved_models/ensemble'):
-        self.model_dir = model_dir
+    def __init__(self, model_dir=None):
+        if model_dir is None:
+            self.model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'saved_models', 'ensemble'))
+        else:
+            self.model_dir = model_dir
         os.makedirs(self.model_dir, exist_ok=True)
         self.models = {}
 

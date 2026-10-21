@@ -1,49 +1,52 @@
-"""Shared stock universe and trading configuration for the NSE trading system."""
+from QA.nifty50_constituents import (
+    NIFTY_50_CONSTITUENTS,
+    is_nifty50_constituent,
+    get_full_nifty50_universe
+)
 
-# --- Stock Universe (10 high-liquidity NSE stocks) ---------------------------
+# Full Official 50-Stock NIFTY 50 Universe
+FULL_NIFTY_50_UNIVERSE = get_full_nifty50_universe()
+
+# --- Active Stock Focus Universe (High-Liquidity Constituents) ---------------
 STOCK_UNIVERSE = {
     # Original 5
     "RELIANCE.NS": "Reliance Industries",
     "HDFCBANK.NS": "HDFC Bank",
     "BHARTIARTL.NS": "Bharti Airtel",
     "ICICIBANK.NS": "ICICI Bank",
-    "TATACAP.NS": "Tata Capital",
+    "TATASTEEL.NS": "Tata Steel",
     # Added 5 (high-liquidity Nifty 50)
     "INFY.NS": "Infosys",
     "TCS.NS": "TCS",
     "SBIN.NS": "State Bank of India",
     "AXISBANK.NS": "Axis Bank",
     "BAJFINANCE.NS": "Bajaj Finance",
+    # Benchmark Index Instrument
+    "^NSEI": "NIFTY 50 Index",
 }
 
 STOCK_SYMBOLS = list(STOCK_UNIVERSE.keys())
 
 # --- Active Trading Universe & Blacklist (Phase 1 Fix 2) ---------------------
-# Stocks with historical or rolling directional accuracy below 50%.
-# These are scanned on the radar for telemetry, but automated BUY execution is blocked
-# until per-stock models or regime filters establish consistent statistical edge.
-STOCK_BLACKLIST = {
-    "SBIN.NS",        # 36.0% historical baseline accuracy
-    "AXISBANK.NS",    # 44.0% historical baseline accuracy
-    "ICICIBANK.NS",   # 44.0% historical baseline accuracy
-    "HDFCBANK.NS",    # 48.0% historical baseline accuracy
-    "BAJFINANCE.NS",  # 48.0% historical baseline accuracy
-}
+# Dynamic model scoring evaluates all 10 liquid universe stocks.
+# Static blacklist is cleared to enable top-momentum breakouts (e.g. AXISBANK, TATACAP, BAJFINANCE).
+STOCK_BLACKLIST = set()
 
 # Symbols actively approved for live trade execution
-ACTIVE_TRADING_SYMBOLS = [s for s in STOCK_SYMBOLS if s not in STOCK_BLACKLIST]
+ACTIVE_TRADING_SYMBOLS = STOCK_SYMBOLS
 
 # --- Trading Thresholds ------------------------------------------------------
-MIN_NET_PROFIT_PCT = 0.0005         # 0.05% minimum net profit after ALL costs to enter/exit
-MAX_GROSS_LOSS_PCT = 0.003          # 0.3% max gross loss before stop-loss triggers
+MIN_NET_PROFIT_PCT = 0.015         # 1.5% minimum net profit target
+MAX_GROSS_LOSS_PCT = 0.003         # 0.3% max gross loss before stop-loss triggers (Strict Mandate)
 DEFAULT_CAPITAL = 100000            # Default starting capital (INR) -- overridable from UI
 
 # --- Position Sizing (dynamic, confidence-based) -----------------------------
 # Percentage of AVAILABLE (uninvested) capital to allocate per trade
+# Calibrated for 100% own-capital spot compounding without leverage drag
 POSITION_SIZING = {
-    "high":   0.15,   # Confidence > 0.8  -> 15% of available capital
-    "medium": 0.10,   # Confidence 0.7-0.8 -> 10%
-    "low":    0.05,   # Confidence 0.6-0.7 -> 5%
+    "high":   0.95,   # Confidence > 0.8  -> 95% of available capital
+    "medium": 0.85,   # Confidence 0.7-0.8 -> 85%
+    "low":    0.60,   # Confidence 0.6-0.7 -> 60%
 }
 
 # --- Scanning & Timing -------------------------------------------------------

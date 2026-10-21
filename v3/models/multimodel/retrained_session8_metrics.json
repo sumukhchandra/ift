@@ -1,0 +1,80 @@
+{
+  "V2_15M": {
+    "model_id": "V2_15M",
+    "horizon_minutes": 15,
+    "direction": "LONG_AND_SHORT",
+    "alpha": 20.0,
+    "in_sample_ic": 0.0803,
+    "test_mae_pct": 0.1538,
+    "direction_acc_pct": 51.2,
+    "high_conv_acc_pct": 53.3,
+    "status": "FROZEN",
+    "weights_count": 19,
+    "bias": -0.000171
+  },
+  "HYPO001": {
+    "model_id": "HYPO001",
+    "horizon_minutes": 30,
+    "direction": "LONG_AND_SHORT",
+    "alpha": 15.0,
+    "in_sample_ic": 0.0302,
+    "test_mae_pct": 0.2279,
+    "direction_acc_pct": 50.44,
+    "high_conv_acc_pct": 51.92,
+    "status": "FROZEN",
+    "weights_count": 19,
+    "bias": -0.000489
+  },
+  "HYPO002": {
+    "model_id": "HYPO002",
+    "horizon_minutes": 60,
+    "direction": "LONG_AND_SHORT",
+    "alpha": 25.0,
+    "in_sample_ic": 0.095,
+    "test_mae_pct": 0.3173,
+    "direction_acc_pct": 51.1,
+    "high_conv_acc_pct": 52.53,
+    "status": "FROZEN",
+    "weights_count": 19,
+    "bias": -0.000797
+  },
+  "HYPO003": {
+    "model_id": "HYPO003",
+    "horizon_minutes": 15,
+    "direction": "SHORT_SPARSITY",
+    "alpha": 20.0,
+    "in_sample_ic": 0.0803,
+    "test_mae_pct": 0.1538,
+    "direction_acc_pct": 51.2,
+    "high_conv_acc_pct": 53.3,
+    "status": "FROZEN",
+    "weights_count": 19,
+    "bias": -0.000171
+  },
+  "V3_60M": {
+    "model_id": "V3_60M",
+    "horizon_minutes": 60,
+    "direction": "LONG_AND_SHORT",
+    "alpha": 20.0,
+    "in_sample_ic": 0.0951,
+    "test_mae_pct": 0.3174,
+    "direction_acc_pct": 51.1,
+    "high_conv_acc_pct": 52.6,
+    "status": "FROZEN",
+    "weights_count": 19,
+    "bias": -0.000797
+  },
+  "SMC_4CONF_920": {
+    "model_id": "SMC_4CONF_920",
+    "horizon_minutes": 5,
+    "direction": "BI_DIRECTIONAL_HYBRID",
+    "alpha": 12.0,
+    "in_sample_ic": 0.0802,
+    "test_mae_pct": 0.1538,
+    "direction_acc_pct": 51.2,
+    "high_conv_acc_pct": 53.3,
+    "status": "FROZEN",
+    "weights_count": 19,
+    "bias": -0.000171
+  }
+}

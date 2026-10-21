@@ -1,0 +1,1264 @@
+﻿================================================================================
+ ALPHANSE V2 ù PHASE 1 & 2 AUTOMATED VERIFICATION SUITE
+================================================================================
+Workspace Root: C:\Users\sumuk\.gemini\antigravity-ide\scratch\ift
+Python Version: 3.12.10
+--------------------------------------------------------------------------------
+python : test_manifest_and_trade_lineage 
+(adaptive.test_daily_pipeline.TestAdaptivePipeline.test_manifest_and_trade_lineage)
+At line:1 char:1
++ python run_tests.py > reports/live/test_suite_execution_evidence.txt  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (test_manifest_a..._trade_lineage):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Verifies manifest serialization and cryptographic trade lineage. ... ok
+test_opportunity_ranker_filtering (adaptive.test_daily_pipeline.TestAdaptivePipeline.test_opportunity_ranker_filtering)
+Verifies that OpportunityRanker ranks by ENV and applies cost hurdle. ... ok
+test_session_trader_execution_realism 
+(adaptive.test_daily_pipeline.TestAdaptivePipeline.test_session_trader_execution_realism)
+Verifies session trader lifecycle, integer sizing, and trade logging. ... 2026-10-20 03:15:20,305 [INFO] Starting 
+sequential session trading for 2026-09-22 (Horizon: 2 bars, Capital: \u20b95000.00)...
+2026-10-20 03:15:20,356 [INFO] Session 2026-09-22 complete: 2 trades executed. Ending capital: \u20b95016.61
+ok
+test_01_no_future_data_enters_training (adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulati
+on.test_01_no_future_data_enters_training) ... ok
+test_02_d_day_data_cannot_train_d_day_model (adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSim
+ulation.test_02_d_day_data_cannot_train_d_day_model) ... 2026-10-20 03:15:20,562 [INFO] [MULTIMODEL] Starting 
+pre-market retraining for Session: 2026-09-15...
+2026-10-20 03:15:20,645 [INFO] Loaded 48009 combined rows across 11 symbols.
+2026-10-20 03:15:20,895 [INFO] Engineered 22 features across 48009 total observations.
+ok
+test_03_each_days_model_hashes_reproducible (adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSim
+ulation.test_03_each_days_model_hashes_reproducible) ... ok
+test_04_all_five_models_participate (adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.
+test_04_all_five_models_participate) ... ok
+test_05_model_failure_isolation_works (adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulatio
+n.test_05_model_failure_isolation_works) ... ok
+test_06_costs_are_applied_correctly (adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.
+test_06_costs_are_applied_correctly) ... ok
+test_07_whole_share_sizing_works 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_07_whole_share_sizing_works) 
+... ok
+test_08_hurdle_079_produces_hold 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_08_hurdle_079_produces_hold) 
+... ok
+test_09_hurdle_080_produces_trade 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_09_hurdle_080_produces_trade) 
+... ok
+test_10_hurdle_081_produces_trade 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_10_hurdle_081_produces_trade) 
+... ok
+test_11_lunch_blackout_works 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_11_lunch_blackout_works) ... ok
+test_12_entry_cutoff_works 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_12_entry_cutoff_works) ... ok
+test_13_mandatory_close_works 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_13_mandatory_close_works) ... 
+ok
+test_14_no_overnight_position_survives (adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulati
+on.test_14_no_overnight_position_survives) ... ok
+test_15_zero_trade_days_preserved 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_15_zero_trade_days_preserved) 
+... ok
+test_16_capital_cannot_become_negative (adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulati
+on.test_16_capital_cannot_become_negative) ... ok
+test_17_no_fractional_shares 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_17_no_fractional_shares) ... ok
+test_18_audit_lineage_is_complete 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_18_audit_lineage_is_complete) 
+... ok
+test_19_rerunning_produces_identical_results (adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSi
+mulation.test_19_rerunning_produces_identical_results) ... ok
+test_20_session_5_data_is_excluded 
+(adaptive.test_historical_multimodel_simulation.TestHistoricalMultiModelSimulation.test_20_session_5_data_is_excluded) 
+... ok
+test_candidate_decision_telemetry_fields 
+(adaptive.test_research_matrix_v2.TestResearchMatrixV2.test_candidate_decision_telemetry_fields)
+Verifies CandidateDecisionAuditRecord and TradeAuditRecord preserve all 29 fields ... ok
+test_conviction_tier_filtering (adaptive.test_research_matrix_v2.TestResearchMatrixV2.test_conviction_tier_filtering)
+Verifies ranker filters opportunities by conviction tier. ... ok
+test_futures_margin_feasibility (adaptive.test_research_matrix_v2.TestResearchMatrixV2.test_futures_margin_feasibility)
+Verifies FuturesTrader explicitly detects when capital is below SPAN margin. ... ok
+test_no_early_stop_inconclusive_preservation 
+(adaptive.test_research_matrix_v2.TestResearchMatrixV2.test_no_early_stop_inconclusive_preservation)
+CRITICAL PROTOCOL GUARD: ... ok
+test_phase_b_cryptographic_freeze 
+(adaptive.test_research_matrix_v2.TestResearchMatrixV2.test_phase_b_cryptographic_freeze)
+Verifies Selected Candidate is frozen with deterministic SHA-256 hash. ... 2026-10-20 03:15:21,257 [INFO] Selected 
+Candidate frozen successfully: tests/scratch_matrix_v2\frozen\Candidate_CASH_EQUITY_6b_5bb617c1.json (Hash: 
+5bb617c17d070725)
+ok
+test_phase_c_inconclusive_rule (adaptive.test_research_matrix_v2.TestResearchMatrixV2.test_phase_c_inconclusive_rule)
+CRITICAL: Verifies Phase C outputs INCONCLUSIVE if trades < 30 or sessions < 10. ... ok
+test_preliminary_price_ratio_heuristic 
+(adaptive.test_research_matrix_v2.TestResearchMatrixV2.test_preliminary_price_ratio_heuristic)
+Verifies optional preliminary price ratio filter rejects stocks > 25% capital. ... ok
+test_ticket_economics_authoritative_calculation 
+(adaptive.test_research_matrix_v2.TestResearchMatrixV2.test_ticket_economics_authoritative_calculation)
+Verifies unit economics calculates gross INR minus costs accurately. ... ok
+test_ticket_economics_rejects_insufficient_capital 
+(adaptive.test_research_matrix_v2.TestResearchMatrixV2.test_ticket_economics_rejects_insufficient_capital)
+Verifies ticket economics rejects stock when capital cannot even buy 1 share. ... ok
+test_hurdle_boundary_conditions_079_080_081 
+(adaptive.test_synthetic_net_edge_chain.TestSyntheticNetEdgeChain.test_hurdle_boundary_conditions_079_080_081)
+Tests the exact boundary around the \u20b90.80 hurdle: ... ok
+test_single_profitable_opportunity_full_chain 
+(adaptive.test_synthetic_net_edge_chain.TestSyntheticNetEdgeChain.test_single_profitable_opportunity_full_chain)
+Traces every link of the economic calculation chain for a high-conviction ... ok
+test_01_all_five_models_registered 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_01_all_five_models_registered) ... ok
+test_02_each_model_receives_only_d1_data 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_02_each_model_receives_only_d1_data) ... 
+ok
+test_03_future_data_leakage_detected 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_03_future_data_leakage_detected) ... 
+2026-10-20 03:15:21,288 [INFO] [MULTIMODEL] Starting pre-market retraining for Session: 2026-09-15...
+2026-10-20 03:15:21,358 [INFO] Loaded 48009 combined rows across 11 symbols.
+2026-10-20 03:15:21,603 [INFO] Engineered 22 features across 48009 total observations.
+ok
+test_04_each_model_gets_unique_artifact_and_hash (adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architectu
+re.test_04_each_model_gets_unique_artifact_and_hash) ... ok
+test_05_five_model_inference_works 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_05_five_model_inference_works) ... ok
+test_06_four_model_inference_works_when_one_fails (adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architect
+ure.test_06_four_model_inference_works_when_one_fails) ... ok
+test_07_model_disagreement_is_recorded 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_07_model_disagreement_is_recorded) ... ok
+test_08_model_agreement_recorded 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_08_model_agreement_recorded) ... ok
+test_09_different_horizons_are_preserved 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_09_different_horizons_are_preserved) ... 
+ok
+test_10_predictions_are_normalized_correctly 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_10_predictions_are_normalized_correctly) 
+... ok
+test_11_cost_calculation_occurs_before_trade_decision (adaptive.test_v3_multimodel_session5.TestMultiModelSession5Archi
+tecture.test_11_cost_calculation_occurs_before_trade_decision) ... ok
+test_12_whole_share_sizing_works 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_12_whole_share_sizing_works) ... ok
+test_13_insufficient_capital_produces_hold_cash (adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architectur
+e.test_13_insufficient_capital_produces_hold_cash) ... ok
+test_14_negative_net_return_produces_hold_cash (adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture
+.test_14_negative_net_return_produces_hold_cash) ... ok
+test_15_candidate_audit_contains_all_predictions (adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architectu
+re.test_15_candidate_audit_contains_all_predictions) ... ok
+test_16_model_hashes_are_persisted 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_16_model_hashes_are_persisted) ... ok
+test_17_no_model_can_retrain_during_session 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_17_no_model_can_retrain_during_session) 
+... ok
+test_18_live_execution_remains_physically_disabled (adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architec
+ture.test_18_live_execution_remains_physically_disabled) ... ok
+test_19_session_close_flattening_active 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_19_session_close_flattening_active) ... 
+ok
+test_20_existing_v2_tests_pass 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_20_existing_v2_tests_pass) ... 
+2026-10-20 03:15:21,848 [INFO] Starting sequential session trading for 2026-09-22 (Horizon: 2 bars, Capital: 
+\u20b95000.00)...
+2026-10-20 03:15:21,857 [INFO] Session 2026-09-22 complete: 2 trades executed. Ending capital: \u20b95016.61
+----------------------------------------------------------------------
+Ran 3 tests in 0.030s
+
+OK
+ok
+test_21_existing_v3_tests_pass 
+(adaptive.test_v3_multimodel_session5.TestMultiModelSession5Architecture.test_21_existing_v3_tests_pass) ... 
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+ok
+test_01_all_six_models_registered_and_frozen 
+(adaptive.test_v3_multimodel_session6.TestMultiModelSession6Architecture.test_01_all_six_models_registered_and_frozen) 
+... ok
+test_02_session6_data_cutoff_strictly_d1 
+(adaptive.test_v3_multimodel_session6.TestMultiModelSession6Architecture.test_02_session6_data_cutoff_strictly_d1) ... 
+ok
+test_03_master_manifest_exists_on_disk 
+(adaptive.test_v3_multimodel_session6.TestMultiModelSession6Architecture.test_03_master_manifest_exists_on_disk) ... ok
+test_04_session6_premarket_reports_generated 
+(adaptive.test_v3_multimodel_session6.TestMultiModelSession6Architecture.test_04_session6_premarket_reports_generated) 
+... ok
+test_05_capital_allocation_meets_constraints 
+(adaptive.test_v3_multimodel_session6.TestMultiModelSession6Architecture.test_05_capital_allocation_meets_constraints) 
+... ok
+test_06_live_execution_lock_active 
+(adaptive.test_v3_multimodel_session6.TestMultiModelSession6Architecture.test_06_live_execution_lock_active) ... ok
+test_manifest_and_trade_serialization 
+(adaptive.test_v3_pipeline.TestV3AuditLedgerIsolation.test_manifest_and_trade_serialization) ... ok
+test_experiment_status_is_validation 
+(adaptive.test_v3_pipeline.TestV3ConfigAndConstants.test_experiment_status_is_validation) ... ok
+test_horizon_is_60m (adaptive.test_v3_pipeline.TestV3ConfigAndConstants.test_horizon_is_60m) ... ok
+test_replay_disclaimer_present (adaptive.test_v3_pipeline.TestV3ConfigAndConstants.test_replay_disclaimer_present) ... 
+ok
+test_dynamic_ranking_order (adaptive.test_v3_pipeline.TestV3OpportunityEngineRupeeNetEdge.test_dynamic_ranking_order) 
+... ok
+test_insufficient_signal_floor_rejected 
+(adaptive.test_v3_pipeline.TestV3OpportunityEngineRupeeNetEdge.test_insufficient_signal_floor_rejected) ... ok
+test_negative_rupee_net_edge_rejected 
+(adaptive.test_v3_pipeline.TestV3OpportunityEngineRupeeNetEdge.test_negative_rupee_net_edge_rejected) ... ok
+test_viable_opportunity_passing_hurdle 
+(adaptive.test_v3_pipeline.TestV3OpportunityEngineRupeeNetEdge.test_viable_opportunity_passing_hurdle) ... ok
+test_entry_cutoff_time (adaptive.test_v3_pipeline.TestV3SessionTraderTimeGates.test_entry_cutoff_time) ... ok
+test_lunch_blackout_boundaries (adaptive.test_v3_pipeline.TestV3SessionTraderTimeGates.test_lunch_blackout_boundaries) 
+... ok
+test_corporate_action_adjustments_math 
+(data.test_data_pipeline.TestDataPipeline.test_corporate_action_adjustments_math) ... 2026-10-20 03:15:21,921 [INFO] 
+Applied dividend adjustment for TESTDIV.NS on 2026-09-18 (D=10.0, P_prev=100.00, factor=0.900000)
+ok
+test_historical_replay_adapter_from_parquet 
+(data.test_data_pipeline.TestDataPipeline.test_historical_replay_adapter_from_parquet) ... ok
+test_manifest_generation (data.test_data_pipeline.TestDataPipeline.test_manifest_generation) ... 2026-10-20 
+03:15:21,959 [INFO] Saved ingestion manifest to 
+C:\Users\sumuk\AppData\Local\Temp\tmpczi_3p9l\metadata\ingestion_manifest.json
+ok
+test_process_raw_chunk_columns_and_filtering 
+(data.test_data_pipeline.TestDataPipeline.test_process_raw_chunk_columns_and_filtering) ... ok
+test_process_raw_chunk_price_geometry_snapping 
+(data.test_data_pipeline.TestDataPipeline.test_process_raw_chunk_price_geometry_snapping) ... ok
+test_cumulative_evidence_gate 
+(data.test_fresh_validation_harness.TestFreshSessionHarness.test_cumulative_evidence_gate)
+Evidence gate must report INCONCLUSIVE_ACCUMULATING until at least 10 sessions are accumulated. ... ok
+test_mock_session_generation_valid 
+(data.test_fresh_validation_harness.TestFreshSessionHarness.test_mock_session_generation_valid)
+Verify generated mock session conforms to required schema and geometry. ... ok
+test_rejects_symbol_exceeding_missing_threshold 
+(data.test_fresh_validation_harness.TestFreshSessionHarness.test_rejects_symbol_exceeding_missing_threshold)
+Verify that a session where one symbol has > 5% missing bars is rejected. ... ok
+test_construct_session_grid (data.test_grid_validation.TestGridValidator.test_construct_session_grid) ... ok
+test_detects_duplicate_bars (data.test_grid_validation.TestGridValidator.test_detects_duplicate_bars) ... ok
+test_detects_geometry_violations (data.test_grid_validation.TestGridValidator.test_detects_geometry_violations) ... ok
+test_detects_missing_bars (data.test_grid_validation.TestGridValidator.test_detects_missing_bars) ... ok
+test_deterministic_data_gate_blocks_on_insufficient_sessions 
+(data.test_grid_validation.TestGridValidator.test_deterministic_data_gate_blocks_on_insufficient_sessions) ... ok
+test_deterministic_data_gate_passes_when_all_criteria_met 
+(data.test_grid_validation.TestGridValidator.test_deterministic_data_gate_passes_when_all_criteria_met) ... ok
+test_max_missing_bar_pct_per_symbol_gate 
+(data.test_grid_validation.TestGridValidator.test_max_missing_bar_pct_per_symbol_gate) ... ok
+test_volatility_regime_breakdown_and_gate 
+(data.test_grid_validation.TestGridValidator.test_volatility_regime_breakdown_and_gate) ... ok
+test_bajfinance_contract_specs (derivatives.test_contract_master.TestNSEContractMaster.test_bajfinance_contract_specs)
+Verify BAJFINANCE lot size and tick size from contract master. ... ok
+test_baseline_contracts_loaded (derivatives.test_contract_master.TestNSEContractMaster.test_baseline_contracts_loaded)
+Verify standard baseline contracts are registered. ... ok
+test_tatacap_is_not_fo_contract 
+(derivatives.test_contract_master.TestNSEContractMaster.test_tatacap_is_not_fo_contract)
+TATACAP has NO active F&O contracts on NSE. ... ok
+test_tataconsum_is_distinct (derivatives.test_contract_master.TestNSEContractMaster.test_tataconsum_is_distinct)
+TATACONSUM has active contracts (lot size 900) and is distinct from TATACAP. ... ok
+test_additive_identity (derivatives.test_futures_cost_model.TestNSEFuturesCostModel.test_additive_identity)
+Verify that sum of components exactly equals total friction bps. ... ok
+test_exact_statutory_calculation_on_10l 
+(derivatives.test_futures_cost_model.TestNSEFuturesCostModel.test_exact_statutory_calculation_on_10l)
+Verifies the exact round-trip calculation on \u20b910 Lakh notional: ... ok
+test_refutes_naive_2_to_3_bps_assumption 
+(derivatives.test_futures_cost_model.TestNSEFuturesCostModel.test_refutes_naive_2_to_3_bps_assumption)
+Proves that total futures friction is well above the naive 2-3.5 bps assumption. ... ok
+test_small_notional_higher_statutory_bps 
+(derivatives.test_futures_cost_model.TestNSEFuturesCostModel.test_small_notional_higher_statutory_bps)
+On smaller notional (e.g. \u20b92 Lakhs), the flat \u20b920 brokerage increases ... ok
+test_output_a_economic_sensitivity 
+(derivatives.test_futures_validator.TestFuturesValidator.test_output_a_economic_sensitivity)
+Tests Output A: Sensitivity of hypothetical +12.76 bps gross return ... ok
+test_output_b_tatacap_rejection 
+(derivatives.test_futures_validator.TestFuturesValidator.test_output_b_tatacap_rejection)
+Tests Output B: Attempting signal transfer on TATACAP returns REJECTED_INELIGIBLE ... ok
+test_active_contract_expiries_cycle 
+(derivatives.test_settlement_calendar.TestNSESettlementCalendar.test_active_contract_expiries_cycle)
+Test resolution of near, next, and far month contract expiries. ... ok
+test_expiry_past_current_date 
+(derivatives.test_settlement_calendar.TestNSESettlementCalendar.test_expiry_past_current_date)
+When current date is past the month's expiry, near month shifts to next month. ... ok
+test_last_tuesday_calculation 
+(derivatives.test_settlement_calendar.TestNSESettlementCalendar.test_last_tuesday_calculation)
+Test finding the last Tuesday of various months. ... ok
+test_monthly_expiry_holiday_adjustment 
+(derivatives.test_settlement_calendar.TestNSESettlementCalendar.test_monthly_expiry_holiday_adjustment)
+When the last Tuesday is an exchange holiday, expiry moves to previous trading day. ... ok
+test_monthly_expiry_regular 
+(derivatives.test_settlement_calendar.TestNSESettlementCalendar.test_monthly_expiry_regular)
+When the last Tuesday is a trading day, it is the expiry day. ... ok
+test_bajfinance_mapping (derivatives.test_signal_mapper.TestSignalMapper.test_bajfinance_mapping)
+Test mapping cash BAJFINANCE.NS to near-month futures contract. ... ok
+test_rejection_when_capital_insufficient_for_lot 
+(derivatives.test_signal_mapper.TestSignalMapper.test_rejection_when_capital_insufficient_for_lot)
+BAJFINANCE at \u20b96500 with lot size 125 requires notional \u20b98,12,500. ... ok
+test_tatacap_raises_ineligible_error 
+(derivatives.test_signal_mapper.TestSignalMapper.test_tatacap_raises_ineligible_error)
+TATACAP.NS has no F&O contract. ... ok
+test_duplicate_idempotency_key_rejected 
+(execution.test_idempotency.TestOrderIdempotency.test_duplicate_idempotency_key_rejected) ... ok
+test_in_flight_symbol_conflict_rejected 
+(execution.test_idempotency.TestOrderIdempotency.test_in_flight_symbol_conflict_rejected) ... ok
+test_unique_order_registration (execution.test_idempotency.TestOrderIdempotency.test_unique_order_registration) ... ok
+test_illegal_direct_skip_raises (execution.test_order_states.TestOrderStateMachine.test_illegal_direct_skip_raises) 
+... ok
+test_illegal_transition_out_of_filled_raises 
+(execution.test_order_states.TestOrderStateMachine.test_illegal_transition_out_of_filled_raises) ... ok
+test_legal_cancellation_flow (execution.test_order_states.TestOrderStateMachine.test_legal_cancellation_flow) ... ok
+test_legal_full_fill_flow (execution.test_order_states.TestOrderStateMachine.test_legal_full_fill_flow) ... ok
+test_feature_source_isolation (features.test_feature_pipeline.TestFeaturePipeline.test_feature_source_isolation)
+Ensure RAW and ADJUSTED columns are strictly partitioned. ... ok
+test_symbol_feature_computation (features.test_feature_pipeline.TestFeaturePipeline.test_symbol_feature_computation)
+Test feature computation for a single symbol. ... ok
+test_vwap_session_reset (features.test_feature_pipeline.TestFeaturePipeline.test_vwap_session_reset)
+Verify that intraday VWAP resets on the new trading session. ... ok
+test_equivalence_on_reliance_fixture 
+(features.test_golden_equivalence.TestGoldenFixtureEquivalence.test_equivalence_on_reliance_fixture)
+Test equivalence on RELIANCE.NS fixture. ... ok
+test_equivalence_on_tatacap_fixture 
+(features.test_golden_equivalence.TestGoldenFixtureEquivalence.test_equivalence_on_tatacap_fixture)
+Test equivalence across 109 consecutive Friday bars of TATACAP.NS. ... ok
+test_buffer_bounded_at_max_lookback 
+(features.test_incremental.TestIncrementalEngine.test_buffer_bounded_at_max_lookback) ... ok
+test_cross_session_masking (features.test_labeling.TestIntradayLabeler.test_cross_session_masking)
+Verify that the last bar of Day 1 has NaN target return (cannot peek into Day 2). ... ok
+test_directional_hurdle_labels (features.test_labeling.TestIntradayLabeler.test_directional_hurdle_labels)
+Verify directional hurdle classification (+1, 0, -1). ... ok
+test_raw_forward_return_calculation (features.test_labeling.TestIntradayLabeler.test_raw_forward_return_calculation)
+Verify H=1 (5m) forward log return from raw prices. ... ok
+test_01_data_cleanup_preserves_immutable_files 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_01_data_cleanup_preserves_immutable_files) 
+... 2026-10-20 03:15:22,884 [INFO] [CLEANER] Starting EOD data cleanup for session 2026-09-24...
+ok
+test_02_fifteen_domain_market_intelligence 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_02_fifteen_domain_market_intelligence) ... ok
+test_03_premarket_freeze_stops_at_0905 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_03_premarket_freeze_stops_at_0905) ... ok
+test_04_lookahead_violation_error_raised 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_04_lookahead_violation_error_raised) ... ok
+test_05_world_state_synthesis 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_05_world_state_synthesis) ... ok
+test_06_roadmap_optimizer_generates_tri_roadmaps 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_06_roadmap_optimizer_generates_tri_roadmaps) 
+... ok
+test_07_whole_share_integer_sizing_in_roadmap 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_07_whole_share_integer_sizing_in_roadmap) ... 
+ok
+test_08_five_models_output_rich_predictions 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_08_five_models_output_rich_predictions) ... ok
+test_09_meta_orchestrator_consensus_transparent_reasons (orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestr
+ator.test_09_meta_orchestrator_consensus_transparent_reasons) ... ok
+test_10_capital_allocation_plan_respects_hurdle 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_10_capital_allocation_plan_respects_hurdle) 
+... ok
+test_11_one_minute_thesis_verification_states 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_11_one_minute_thesis_verification_states) ... 
+ok
+test_12_active_position_monitor_eod_square_off 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_12_active_position_monitor_eod_square_off) 
+... ok
+test_13_daily_orchestrator_generates_all_14_artifacts (orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrat
+or.test_13_daily_orchestrator_generates_all_14_artifacts) ... 2026-10-20 03:15:23,773 [INFO] 
+================================================================================
+2026-10-20 03:15:23,773 [INFO]   ALPHANSE V3 ù DAILY ADAPTIVE MULTI-MODEL CYCLE: 2026-09-24
+2026-10-20 03:15:23,773 [INFO] ================================================================================
+2026-10-20 03:15:23,773 [INFO] [CLEANER] Starting EOD data cleanup for session 2026-09-24...
+2026-10-20 03:15:24,083 [INFO] [ORCHESTRATOR] Completed daily cycle for 2026-09-24. Artifacts written to 
+C:\Users\sumuk\AppData\Local\Temp\tmp95y45yea
+ok
+test_14_unauthorized_live_execution_raises 
+(orchestrator.test_daily_orchestrator.TestDailyAdaptiveOrchestrator.test_14_unauthorized_live_execution_raises) ... ok
+test_01_load_and_freeze_premarket_hypotheses 
+(orchestrator.test_session5_live_validator.TestSession5RealtimeValidator.test_01_load_and_freeze_premarket_hypotheses)
+Verifies pre-market hypotheses are loaded, frozen, and SHA-256 hashed. ... ok
+test_02_minute_by_minute_tracking_loop 
+(orchestrator.test_session5_live_validator.TestSession5RealtimeValidator.test_02_minute_by_minute_tracking_loop)
+Verifies minute-by-minute tracking, thesis states, and paper trade execution. ... ok
+test_03_all_six_models_evaluated_separately 
+(orchestrator.test_session5_live_validator.TestSession5RealtimeValidator.test_03_all_six_models_evaluated_separately)
+Verifies all 6 models are evaluated separately across accuracy and economic dimensions. ... ok
+test_04_report_sections_a_through_p 
+(orchestrator.test_session5_live_validator.TestSession5RealtimeValidator.test_04_report_sections_a_through_p)
+Verifies generation of SESSION_5_REALTIME_VALIDATION_REPORT.md with all sections. ... ok
+test_01_two_stock_basket_selected_when_superior 
+(portfolio.test_basket_optimizer.TestPortfolioBasketOptimizer.test_01_two_stock_basket_selected_when_superior) ... ok
+test_02_single_stock_basket_selected_when_superior 
+(portfolio.test_basket_optimizer.TestPortfolioBasketOptimizer.test_02_single_stock_basket_selected_when_superior) ... 
+ok
+test_03_three_plus_stock_basket_selected 
+(portfolio.test_basket_optimizer.TestPortfolioBasketOptimizer.test_03_three_plus_stock_basket_selected) ... ok
+test_04_infeasible_baskets_rejected 
+(portfolio.test_basket_optimizer.TestPortfolioBasketOptimizer.test_04_infeasible_baskets_rejected) ... ok
+test_05_capital_and_cash_buffer_constraints_strictly_respected (portfolio.test_basket_optimizer.TestPortfolioBasketOpti
+mizer.test_05_capital_and_cash_buffer_constraints_strictly_respected) ... ok
+test_06_whole_share_integer_sizing_strictly_enforced 
+(portfolio.test_basket_optimizer.TestPortfolioBasketOptimizer.test_06_whole_share_integer_sizing_strictly_enforced) 
+... ok
+test_07_economic_cost_hurdle_respected 
+(portfolio.test_basket_optimizer.TestPortfolioBasketOptimizer.test_07_economic_cost_hurdle_respected) ... ok
+test_08_risk_and_sector_penalties_applied 
+(portfolio.test_basket_optimizer.TestPortfolioBasketOptimizer.test_08_risk_and_sector_penalties_applied) ... ok
+test_09_zero_trade_cash_baseline_valid_when_all_fail 
+(portfolio.test_basket_optimizer.TestPortfolioBasketOptimizer.test_09_zero_trade_cash_baseline_valid_when_all_fail) 
+... ok
+test_10_no_future_data_used (portfolio.test_basket_optimizer.TestPortfolioBasketOptimizer.test_10_no_future_data_used) 
+... ok
+test_01_sequential_capital_recycling 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_01_sequential_capital_recycling)
+1. Verifies that when Trade A exits, capital is immediately returned and reusable. ... 2026-10-20 03:15:24,145 [INFO] 
+[09:15] ENTER 3 shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: \u20b92000.00)
+2026-10-20 03:15:24,145 [INFO] [09:30] EXIT AXISBANK.NS (TAKE_PROFIT_REACHED (LTP \u20b91003.89 >= \u20b91003.89)) at 
+\u20b91003.89 | Net: \u20b9+6.86 (+22.9 bps) | Released: \u20b93006.86 | Cash: \u20b95006.86
+ok
+test_02_one_position_to_another_rotation (portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngi
+ne.test_02_one_position_to_another_rotation)
+2. Verifies that a significantly superior opportunity triggers rotation out of an existing position. ... 2026-10-20 
+03:15:24,145 [INFO] [09:15] ENTER 3 shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: 
+\u20b92000.00)
+2026-10-20 03:15:24,145 [INFO] [09:25] EXIT AXISBANK.NS (ROTATION_REPLACEMENT) at \u20b91000.00 | Net: \u20b9-4.81 
+(-16.0 bps) | Released: \u20b92995.19 | Cash: \u20b93045.19
+2026-10-20 03:15:24,147 [INFO] [09:25] ENTER 1 shares of TCS.NS at \u20b92000.00 (Notional: \u20b92000.00, Rem Cash: 
+\u20b91045.19)
+ok
+test_03_two_position_basket_rotation 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_03_two_position_basket_rotation)
+3. Verifies rotation when holding a 2-stock basket and replacing the weaker leg. ... 2026-10-20 03:15:24,147 [INFO] 
+[09:15] ENTER 3 shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: \u20b92000.00)
+2026-10-20 03:15:24,147 [INFO] [09:15] ENTER 6 shares of TATACAP.NS at \u20b9300.00 (Notional: \u20b91800.00, Rem 
+Cash: \u20b9200.00)
+2026-10-20 03:15:24,147 [INFO] [09:30] EXIT TATACAP.NS (ROTATION_REPLACEMENT) at \u20b9300.50 | Net: \u20b9+0.12 (+0.7 
+bps) | Released: \u20b91800.12 | Cash: \u20b91850.12
+2026-10-20 03:15:24,147 [INFO] [09:30] ENTER 1 shares of RELIANCE.NS at \u20b91200.00 (Notional: \u20b91200.00, Rem 
+Cash: \u20b9650.12)
+ok
+test_04_insufficient_incremental_advantage (portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEn
+gine.test_04_insufficient_incremental_advantage)
+4. Verifies that tiny marginal edge does NOT trigger rotation (hysteresis check). ... 2026-10-20 03:15:24,147 [INFO] 
+[09:15] ENTER 3 shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: \u20b92000.00)
+ok
+test_05_rotation_cost_accounting 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_05_rotation_cost_accounting)
+5. Verifies that exit cost + entry cost + rotation penalty are explicitly accounted for. ... 2026-10-20 03:15:24,147 
+[INFO] [09:15] ENTER 3 shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: \u20b92000.00)
+ok
+test_06_whole_share_sizing 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_06_whole_share_sizing)
+6. Verifies sizing produces strictly integer whole shares. ... 2026-10-20 03:15:24,147 [INFO] [09:15] ENTER 11 shares 
+of TATACAP.NS at \u20b9335.95 (Notional: \u20b93695.45, Rem Cash: \u20b91304.55)
+ok
+test_07_insufficient_capital 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_07_insufficient_capital)
+7. Verifies rejection with INSUFFICIENT_CAPITAL when cash < 1 share price. ... ok
+test_08_entry_cutoff_gate 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_08_entry_cutoff_gate)
+8. Verifies that no entries or rotations occur after 14:25 IST cutoff. ... ok
+test_09_stop_loss_exit 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_09_stop_loss_exit)
+9. Verifies that a position exits when price drops below stop_loss_price. ... 2026-10-20 03:15:24,147 [INFO] [09:15] 
+ENTER 3 shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: \u20b92000.00)
+2026-10-20 03:15:24,147 [INFO] [09:20] EXIT AXISBANK.NS (STOP_LOSS_TRIGGERED (LTP \u20b9980.00 <= \u20b9985.00)) at 
+\u20b9980.00 | Net: \u20b9-64.76 (-215.9 bps) | Released: \u20b92935.24 | Cash: \u20b94935.24
+ok
+test_10_take_profit_exit 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_10_take_profit_exit)
+10. Verifies take profit exit when price reaches target return. ... 2026-10-20 03:15:24,147 [INFO] [09:15] ENTER 3 
+shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: \u20b92000.00)
+2026-10-20 03:15:24,147 [INFO] [09:25] EXIT AXISBANK.NS (TAKE_PROFIT_REACHED (LTP \u20b91005.89 >= \u20b91003.89)) at 
+\u20b91005.89 | Net: \u20b9+12.85 (+42.8 bps) | Released: \u20b93012.85 | Cash: \u20b95012.85
+ok
+test_11_horizon_exit 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_11_horizon_exit)
+11. Verifies exit upon reaching target horizon minutes (60 min). ... 2026-10-20 03:15:24,147 [INFO] [09:15] ENTER 3 
+shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: \u20b92000.00)
+2026-10-20 03:15:24,147 [INFO] [10:15] EXIT AXISBANK.NS (HORIZON_COMPLETED_60M) at \u20b91000.00 | Net: \u20b9-4.81 
+(-16.0 bps) | Released: \u20b92995.19 | Cash: \u20b94995.19
+ok
+test_12_risk_limit_hostile_regime 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_12_risk_limit_hostile_regime)
+12. Verifies candidates are rejected when regime is hostile. ... ok
+test_13_sector_limit 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_13_sector_limit)
+13. Verifies max sector concentration limit (max 3 positions per sector). ... 2026-10-20 03:15:24,147 [INFO] [09:15] 
+ENTER 1 shares of AXISBANK.NS at \u20b9100.00 (Notional: \u20b9100.00, Rem Cash: \u20b94900.00)
+2026-10-20 03:15:24,147 [INFO] [09:15] ENTER 1 shares of TATACAP.NS at \u20b9100.00 (Notional: \u20b9100.00, Rem Cash: 
+\u20b94800.00)
+2026-10-20 03:15:24,147 [INFO] [09:15] ENTER 1 shares of HDFCBANK.NS at \u20b9100.00 (Notional: \u20b9100.00, Rem 
+Cash: \u20b94700.00)
+ok
+test_14_correlation_and_reject_reasons (portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine
+.test_14_correlation_and_reject_reasons)
+14. Verifies non-viable candidates receive explicit reject reasons. ... ok
+test_15_no_lookahead_temporal_barrier 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_15_no_lookahead_temporal_barrier)
+15. Verifies that engine decision strictly uses current timestamp without future bars. ... 2026-10-20 03:15:24,147 
+[INFO] [09:16] ENTER 3 shares of AXISBANK.NS at \u20b91192.40 (Notional: \u20b93577.20, Rem Cash: \u20b91422.80)
+ok
+test_16_frozen_calibration_immutability (portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngin
+e.test_16_frozen_calibration_immutability)
+16. Verifies calibration factor remains completely immutable across all minutes. ... 2026-10-20 03:15:24,147 [INFO] 
+[09:15] ENTER 3 shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: \u20b92000.00)
+ok
+test_17_frozen_model_hash_verification (portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine
+.test_17_frozen_model_hash_verification)
+17. Verifies cryptographic hashes are attached to each audit record. ... 2026-10-20 03:15:24,147 [INFO] [09:15] ENTER 
+3 shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: \u20b92000.00)
+ok
+test_18_idempotent_rotation 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_18_idempotent_rotation)
+18. Verifies engine doesn't re-rotate into the same stock repeatedly on identical bars. ... 2026-10-20 03:15:24,147 
+[INFO] [09:20] EXIT AXISBANK.NS (ROTATION_REPLACEMENT) at \u20b91000.00 | Net: \u20b9-4.81 (-16.0 bps) | Released: 
+\u20b92995.19 | Cash: \u20b93045.19
+2026-10-20 03:15:24,147 [INFO] [09:20] ENTER 1 shares of TCS.NS at \u20b92000.00 (Notional: \u20b92000.00, Rem Cash: 
+\u20b91045.19)
+ok
+test_19_duplicate_order_prevention 
+(portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotationEngine.test_19_duplicate_order_prevention)
+19. Verifies that an already held symbol is not duplicated into multiple positions. ... 2026-10-20 03:15:24,147 [INFO] 
+[09:15] ENTER 3 shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: \u20b92000.00)
+ok
+test_20_zero_trade_session_and_zero_positions (portfolio.test_dynamic_rotation_engine.TestDynamicIntradayCapitalRotatio
+nEngine.test_20_zero_trade_session_and_zero_positions)
+20. Verifies engine preserves 100% cash when no candidates clear economic hurdle. ... ok
+test_01_dynamic_universe_discovery_size 
+(portfolio.test_full_universe_scanning.TestFullUniverseScanning.test_01_dynamic_universe_discovery_size)
+Verifies universe provider discovers full universe without 10-stock limit. ... 2026-10-20 03:15:24,151 [INFO] 
+Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,151 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,151 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+ok
+test_02_universe_filtering_liquidity_and_spread 
+(portfolio.test_full_universe_scanning.TestFullUniverseScanning.test_02_universe_filtering_liquidity_and_spread)
+Verifies universe filter drops illiquid and wide-spread instruments. ... 2026-10-20 03:15:24,151 [INFO] Initialized 
+DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,151 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,151 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,151 [INFO] Universe filter at T: 1 eligible out of 54 evaluated.
+ok
+test_03_universe_filtering_suspension_and_price_bounds 
+(portfolio.test_full_universe_scanning.TestFullUniverseScanning.test_03_universe_filtering_suspension_and_price_bounds)
+Verifies suspended and degenerate price symbols are rejected. ... 2026-10-20 03:15:24,151 [INFO] Initialized 
+DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,151 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,151 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,153 [INFO] Universe filter at T: 0 eligible out of 53 evaluated.
+ok
+test_04_two_stage_funnel_execution 
+(portfolio.test_full_universe_scanning.TestFullUniverseScanning.test_04_two_stage_funnel_execution)
+Verifies Stage 1 cheap screening filters universe before Stage 2 six-model inference. ... 2026-10-20 03:15:24,153 
+[INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,153 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,153 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,153 [INFO] Universe filter at 2026-09-25T09:20:00+05:30: 52 eligible out of 52 evaluated.
+2026-10-20 03:15:24,153 [INFO] [09:20] ENTER 3 shares of TCS.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: 
+\u20b92000.00)
+ok
+test_05_economic_ranking_by_net_rupees_not_raw_bps 
+(portfolio.test_full_universe_scanning.TestFullUniverseScanning.test_05_economic_ranking_by_net_rupees_not_raw_bps)
+Verifies that Stock B with lower raw bps but lower friction and higher NET \u20b9 ... 2026-10-20 03:15:24,153 [INFO] 
+Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,153 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,153 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,153 [INFO] Universe filter at 2026-09-25T09:20:00+05:30: 3 eligible out of 55 evaluated.
+2026-10-20 03:15:24,153 [INFO] [09:20] ENTER 7 shares of STOCK_B.NS at \u20b9500.00 (Notional: \u20b93500.00, Rem 
+Cash: \u20b91500.00)
+2026-10-20 03:15:24,153 [INFO] [09:20] ENTER 1 shares of STOCK_C.NS at \u20b9500.00 (Notional: \u20b9500.00, Rem Cash: 
+\u20b91000.00)
+ok
+test_06_portfolio_optimizer_cash_baseline_zero_positions (portfolio.test_full_universe_scanning.TestFullUniverseScannin
+g.test_06_portfolio_optimizer_cash_baseline_zero_positions)
+Verifies optimizer allocates 0 positions (cash) when no candidate clears economic hurdle. ... 2026-10-20 03:15:24,155 
+[INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,155 [INFO] Universe filter at 2026-09-25T09:15:00+05:30: 2 eligible out of 52 evaluated.
+ok
+test_07_portfolio_optimizer_multi_stock_basket_with_sector_limit (portfolio.test_full_universe_scanning.TestFullUnivers
+eScanning.test_07_portfolio_optimizer_multi_stock_basket_with_sector_limit)
+Verifies multi-stock basket allocation respects max sector concentration. ... 2026-10-20 03:15:24,155 [INFO] 
+Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,155 [INFO] Universe filter at 2026-09-25T09:15:00+05:30: 4 eligible out of 52 evaluated.
+2026-10-20 03:15:24,155 [INFO] [09:15] ENTER 3 shares of TCS.NS at \u20b91000.00 (Notional: \u20b93000.00, Rem Cash: 
+\u20b92000.00)
+2026-10-20 03:15:24,155 [INFO] [09:15] ENTER 1 shares of INFY.NS at \u20b91000.00 (Notional: \u20b91000.00, Rem Cash: 
+\u20b91000.00)
+ok
+test_08_dynamic_capital_rotation_and_recycling 
+(portfolio.test_full_universe_scanning.TestFullUniverseScanning.test_08_dynamic_capital_rotation_and_recycling)
+Verifies dynamic capital rotation out of weak holding into high-net candidate. ... 2026-10-20 03:15:24,155 [INFO] 
+Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,155 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b93000.00, Max Pos: 1, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,155 [INFO] Universe filter at 2026-09-25T09:15:00+05:30: 1 eligible out of 52 evaluated.
+2026-10-20 03:15:24,155 [INFO] [09:15] ENTER 2 shares of AXISBANK.NS at \u20b91000.00 (Notional: \u20b92000.00, Rem 
+Cash: \u20b91000.00)
+2026-10-20 03:15:24,155 [INFO] Universe filter at 2026-09-25T09:20:00+05:30: 2 eligible out of 52 evaluated.
+2026-10-20 03:15:24,155 [INFO] [09:20] EXIT AXISBANK.NS (ROTATION_REPLACEMENT) at \u20b91000.00 | Net: \u20b9-2.92 
+(-14.6 bps) | Released: \u20b91998.64 | Cash: \u20b92998.64
+2026-10-20 03:15:24,155 [INFO] [09:20] ENTER 1 shares of TCS.NS at \u20b92000.00 (Notional: \u20b92000.00, Rem Cash: 
+\u20b9998.64)
+ok
+test_09_no_lookahead_temporal_barrier 
+(portfolio.test_full_universe_scanning.TestFullUniverseScanning.test_09_no_lookahead_temporal_barrier)
+Verifies no future bars or outcome metrics are referenced at timestamp T. ... 2026-10-20 03:15:24,155 [INFO] 
+Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,155 [INFO] Universe filter at 2026-09-25T10:00:00+05:30: 1 eligible out of 52 evaluated.
+2026-10-20 03:15:24,155 [INFO] [10:00] ENTER 1 shares of TCS.NS at \u20b92000.00 (Notional: \u20b92000.00, Rem Cash: 
+\u20b93000.00)
+ok
+test_10_entry_cutoff_and_eod_squareoff 
+(portfolio.test_full_universe_scanning.TestFullUniverseScanning.test_10_entry_cutoff_and_eod_squareoff)
+Verifies entry cutoff at 14:25 and mandatory square-off at 15:25. ... 2026-10-20 03:15:24,155 [INFO] Initialized 
+DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,155 [INFO] Universe filter at 2026-09-25T14:26:00+05:30: 1 eligible out of 52 evaluated.
+ok
+test_11_physical_live_execution_lock 
+(portfolio.test_full_universe_scanning.TestFullUniverseScanning.test_11_physical_live_execution_lock)
+Verifies LiveExecutionDisabledError when live execution is attempted. ... 2026-10-20 03:15:24,155 [INFO] Initialized 
+DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+2026-10-20 03:15:24,155 [INFO] FullUniverseDynamicRotationEngine initialized: Capital \u20b95000.00, Max Pos: 5, 
+Frozen Calib: 0.4858
+2026-10-20 03:15:24,155 [INFO] Initialized DynamicUniverseProvider with 52 master NSE instruments (Max Cap: None)
+ok
+test_clock_cannot_move_backward (replay.test_no_lookahead.TestNoLookahead.test_clock_cannot_move_backward) ... ok
+test_clock_prevents_future_data_access 
+(replay.test_no_lookahead.TestNoLookahead.test_clock_prevents_future_data_access) ... ok
+test_replay_engine_chronological_stepping 
+(replay.test_no_lookahead.TestNoLookahead.test_replay_engine_chronological_stepping) ... ok
+test_brokerage_types (risk.test_broker_config.TestBrokerCostConfig.test_brokerage_types)
+Verify commission calculation across broker fee schedules. ... ok
+test_cost_scenario_additive_identity 
+(risk.test_broker_config.TestBrokerCostConfig.test_cost_scenario_additive_identity)
+Verify sum(components) == total_expected_cost_bps across all 5 registry scenarios. ... ok
+test_cost_scenario_registry (risk.test_broker_config.TestBrokerCostConfig.test_cost_scenario_registry)
+Verify registry scenarios produce expected decomposed friction. ... ok
+test_execution_tree_unfilled_policies 
+(risk.test_broker_config.TestBrokerCostConfig.test_execution_tree_unfilled_policies)
+Verify CANCEL vs MARKET_CROSS execution policies in execution tree. ... ok
+test_statutory_breakdown_on_5k (risk.test_broker_config.TestBrokerCostConfig.test_statutory_breakdown_on_5k)
+Verify the exact 10.63 bps statutory calculation on 5k notional. ... ok
+test_circuit_breaker_resets_for_new_day 
+(risk.test_circuit_breakers.TestCircuitBreakers.test_circuit_breaker_resets_for_new_day) ... ok
+test_circuit_breaker_trips_on_loss_limit 
+(risk.test_circuit_breakers.TestCircuitBreakers.test_circuit_breaker_trips_on_loss_limit) ... ok
+test_base_cost_calculation (risk.test_dynamic_cost.TestDynamicCostModel.test_base_cost_calculation)
+Verify baseline cost breakdown for a standard NSE trade. ... ok
+test_execution_modes (risk.test_dynamic_cost.TestDynamicCostModel.test_execution_modes)
+Verify execution modes: AGGRESSIVE, PASSIVE, and CONSERVATIVE_PASSIVE. ... ok
+test_explicit_participation_rate (risk.test_dynamic_cost.TestDynamicCostModel.test_explicit_participation_rate)
+Verify impact scales with explicit participation rate. ... ok
+test_friction_stress_multipliers (risk.test_dynamic_cost.TestDynamicCostModel.test_friction_stress_multipliers)
+Verify execution friction scales monotonically with stress multiplier. ... ok
+test_economic_rejection_when_cash_insufficient 
+(risk.test_integer_sizing.TestIntegerPositionSizing.test_economic_rejection_when_cash_insufficient) ... ok
+test_elimination_of_arbitrary_price_cap_on_tcs 
+(risk.test_integer_sizing.TestIntegerPositionSizing.test_elimination_of_arbitrary_price_cap_on_tcs)
+V1 hard-blocked TCS (\u20b92,118) on \u20b95k capital because price > \u20b91,250. ... ok
+test_whole_shares_on_tatacap (risk.test_integer_sizing.TestIntegerPositionSizing.test_whole_shares_on_tatacap) ... ok
+test_empty_batch_dict (test_benchmark_and_batching.TestBatchPredictorEdgeCases.test_empty_batch_dict)
+Empty input dict returns empty output dict without exception. ... ok
+test_empty_dataframe (test_benchmark_and_batching.TestBatchPredictorEdgeCases.test_empty_dataframe)
+Empty dataframe returns prediction_valid=False gracefully. ... ok
+test_missing_required_columns (test_benchmark_and_batching.TestBatchPredictorEdgeCases.test_missing_required_columns)
+Dataframe missing required OHLCV columns returns prediction_valid=False. ... ok
+test_mixed_valid_and_invalid_batch 
+(test_benchmark_and_batching.TestBatchPredictorEdgeCases.test_mixed_valid_and_invalid_batch)
+A batch containing both valid and invalid data processes valid symbols accurately while failing invalid symbols 
+closed. ... ok
+test_nans_in_buffer_handled_cleanly 
+(test_benchmark_and_batching.TestBatchPredictorEdgeCases.test_nans_in_buffer_handled_cleanly)
+Buffer with occasional NaNs in price data does not crash or raise unhandled exceptions. ... ok
+test_short_candle_history (test_benchmark_and_batching.TestBatchPredictorEdgeCases.test_short_candle_history)
+Buffers with < 15 candles return prediction_valid=False and confidence=0.0. ... ok
+test_profiler_statistics_monotonicity_and_warmup 
+(test_benchmark_and_batching.TestBenchmarkProfilingHelper.test_profiler_statistics_monotonicity_and_warmup)
+Verifies p50 <= p95 <= p99 <= max and warm-up cycles are properly discarded. ... ok
+test_negative_net_expectancy_rejected 
+(test_benchmark_and_batching.TestEdgeFrictionGateStaleAndHurdleChecks.test_negative_net_expectancy_rejected)
+When gross predicted return is smaller than roundtrip friction, trade is rejected. ... ok
+test_stale_quote_skipped_by_opportunity_engine 
+(test_benchmark_and_batching.TestEdgeFrictionGateStaleAndHurdleChecks.test_stale_quote_skipped_by_opportunity_engine)
+Quotes marked is_stale=True or with BUFFER_FALLBACK are strictly ignored by OpportunityDiscoveryEngine. ... ok
+test_strong_edge_passes_gate 
+(test_benchmark_and_batching.TestEdgeFrictionGateStaleAndHurdleChecks.test_strong_edge_passes_gate)
+When expected return comfortably exceeds all-in friction and margin, trade is approved. ... ok
+test_black_scholes_boundary_conditions 
+(test_benchmark_and_batching.TestOptionsEngineFailClosed.test_black_scholes_boundary_conditions)
+Black-Scholes Greeks calculation handles zero/negative expiry and zero volatility gracefully. ... ok
+test_empty_chain_returns_hold (test_benchmark_and_batching.TestOptionsEngineFailClosed.test_empty_chain_returns_hold)
+Empty option chain returns HOLD safely without raising an exception. ... ok
+test_unaffordable_contracts_rejected 
+(test_benchmark_and_batching.TestOptionsEngineFailClosed.test_unaffordable_contracts_rejected)
+Contracts with lot cost exceeding available bankroll are rejected with INSUFFICIENT_CASH. ... ok
+test_numerical_equivalence_across_symbols 
+(test_benchmark_and_batching.TestSequentialVsBatchEquivalence.test_numerical_equivalence_across_symbols)
+Verifies predicted returns and confidence are bitwise/numerically identical (< 1e-6 diff). ... ok
+test_base_broker_inheritance 
+(test_broker_interface_and_edge_gate.TestBrokerInterfaceAndEdgeGate.test_base_broker_inheritance)
+Verify both brokers inherit from BaseBroker. ... ok
+test_dhan_adapter_safeguards 
+(test_broker_interface_and_edge_gate.TestBrokerInterfaceAndEdgeGate.test_dhan_adapter_safeguards)
+Verify Dhan adapter enforces Rs. 1,500 ceiling, single position, and short selling ban. ... ok
+test_edge_friction_gate_blocks_sub_friction_moves 
+(test_broker_interface_and_edge_gate.TestBrokerInterfaceAndEdgeGate.test_edge_friction_gate_blocks_sub_friction_moves)
+Verify that a small expected move (0.15%) is rejected for 1 share of INFY at Rs. 1,050. ... ok
+test_01_six_10s_observations_form_one_candle 
+(test_candle_aggregator_comprehensive.TestCandleAggregatorComprehensive.test_01_six_10s_observations_form_one_candle)
+Six 10-second quotes in one minute form 0 completed bars initially, and 1 on rollover. ... ok
+test_02_correct_ohlc_values 
+(test_candle_aggregator_comprehensive.TestCandleAggregatorComprehensive.test_02_correct_ohlc_values)
+Verify Open is first price, High is max, Low is min, Close is last price. ... ok
+test_03_cumulative_volume_delta_handling 
+(test_candle_aggregator_comprehensive.TestCandleAggregatorComprehensive.test_03_cumulative_volume_delta_handling)
+Verify cumulative volume delta is correctly calculated across minutes. ... ok
+test_04_incremental_volume_accumulation 
+(test_candle_aggregator_comprehensive.TestCandleAggregatorComprehensive.test_04_incremental_volume_accumulation)
+Verify incremental volume mode sums ticks. ... ok
+test_05_rejection_of_duplicate_and_out_of_order_ticks (test_candle_aggregator_comprehensive.TestCandleAggregatorCompreh
+ensive.test_05_rejection_of_duplicate_and_out_of_order_ticks)
+Duplicate ticks and late arriving ticks must be safely rejected. ... 2026-10-20 03:15:25,341 [INFO] Market data gap 
+detected for TCS.NS: 2.0 mins elapsed between 2026-10-19 09:15:00 IST and 09:17:00 (No synthetic bars fabricated)
+2026-10-20 03:15:25,341 [WARNING] Rejected out-of-order tick for TCS.NS: tick time 09:16:30 is earlier than forming 
+bar 2026-10-19 09:17:00 IST
+ok
+test_06_rejection_of_stale_and_nonfinite_quotes (test_candle_aggregator_comprehensive.TestCandleAggregatorComprehensive
+.test_06_rejection_of_stale_and_nonfinite_quotes)
+Stale quotes, negative prices, NaN, and Inf prices must be rejected. ... 2026-10-20 03:15:25,341 [WARNING] Rejected 
+stale quote for TCS.NS (source: None)
+ok
+test_07_timestamp_normalization 
+(test_candle_aggregator_comprehensive.TestCandleAggregatorComprehensive.test_07_timestamp_normalization)
+Timezone-aware, naive, and string timestamps must normalize to Asia/Kolkata. ... ok
+test_08_gap_does_not_fabricate_synthetic_candles (test_candle_aggregator_comprehensive.TestCandleAggregatorComprehensiv
+e.test_08_gap_does_not_fabricate_synthetic_candles)
+Missing intervals must NOT fabricate phantom intermediate candles. ... 2026-10-20 03:15:25,343 [INFO] Market data gap 
+detected for TCS.NS: 10.0 mins elapsed between 2026-10-19 09:15:00 IST and 09:25:00 (No synthetic bars fabricated)
+ok
+test_09_feature_horizons_r1_r3_r5_r10_on_1m_bars (test_candle_aggregator_comprehensive.TestCandleAggregatorComprehensiv
+e.test_09_feature_horizons_r1_r3_r5_r10_on_1m_bars)
+Verify r1, r3, r5, r10 correctly compute 1m, 3m, 5m, 10m percentage returns. ... ok
+test_10_insufficient_history_rejects_inference 
+(test_candle_aggregator_comprehensive.TestCandleAggregatorComprehensive.test_10_insufficient_history_rejects_inference)
+Feature extraction must fail-closed (return None) if fewer than 15 bars available. ... ok
+test_01_broker_failures_triggers_safe_halt 
+(test_circuit_breakers_and_safe_halts.TestCircuitBreakersAndSafeHalts.test_01_broker_failures_triggers_safe_halt)
+5 consecutive broker quote errors must activate safe halt and block orders. ... 2026-10-20 03:15:27,400 [INFO] 
+[SAFE_HALT_GATE] Order evaluation blocked by safe halt: CONSECUTIVE_BROKER_FAILURES: 5 failed quote requests | 
+{"reason": "CONSECUTIVE_BROKER_FAILURES: 5 failed quote requests"}
+ok
+test_02_stale_quotes_timeout_triggers_safe_halt 
+(test_circuit_breakers_and_safe_halts.TestCircuitBreakersAndSafeHalts.test_02_stale_quotes_timeout_triggers_safe_halt)
+6 consecutive stale cycles (60s) must activate safe halt and block orders. ... 2026-10-20 03:15:28,257 [INFO] 
+[SAFE_HALT_GATE] Order evaluation blocked by safe halt: STALE_MARKET_DATA_TIMEOUT: 60s without fresh quotes | 
+{"reason": "STALE_MARKET_DATA_TIMEOUT: 60s without fresh quotes"}
+ok
+test_03_daily_loss_limit_blocks_new_entries 
+(test_circuit_breakers_and_safe_halts.TestCircuitBreakersAndSafeHalts.test_03_daily_loss_limit_blocks_new_entries)
+If realized net loss reaches -Rs. 30.00, all new orders must be strictly blocked. ... 2026-10-20 03:15:29,207 [INFO] 
+[DAILY_LOSS_LIMIT_REACHED] Daily loss limit hit (\u20b9-30.50 <= -\u20b930.00). New paper entries strictly blocked. | 
+{"realized_pnl": -30.5, "limit": -30.0}
+ok
+test_04_max_one_concurrent_position_enforced 
+(test_circuit_breakers_and_safe_halts.TestCircuitBreakersAndSafeHalts.test_04_max_one_concurrent_position_enforced)
+If 1 open position is already active, evaluate_and_execute_orders must not open a 2nd position. ... ok
+test_05_predict_ml_ensemble_fails_closed_on_insufficient_history (test_circuit_breakers_and_safe_halts.TestCircuitBreak
+ersAndSafeHalts.test_05_predict_ml_ensemble_fails_closed_on_insufficient_history)
+Buffer with fewer than 20 candles must fail closed with prediction_valid=False. ... ok
+test_06_predict_ml_ensemble_fails_closed_on_timeframe_sampling_mismatch (test_circuit_breakers_and_safe_halts.TestCircu
+itBreakersAndSafeHalts.test_06_predict_ml_ensemble_fails_closed_on_timeframe_sampling_mismatch)
+Buffer with 10s sampling must fail closed with TIMEFRAME_SAMPLING_MISMATCH. ... 2026-10-20 03:15:31,800 [INFO] 
+[INFERENCE_FAILURE] TIMEFRAME_SAMPLING_MISMATCH: DETECTED_SUB_MINUTE_SAMPLING: 24 of 24 intervals < 45s (e.g. 10s 
+quotes) | {"symbol": "INFY.NS", "error": "TIMEFRAME_SAMPLING_MISMATCH: DETECTED_SUB_MINUTE_SAMPLING: 24 of 24 
+intervals < 45s (e.g. 10s quotes)"}
+ok
+test_07_dual_key_authorization_guarantees_paper_mode (test_circuit_breakers_and_safe_halts.TestCircuitBreakersAndSafeHa
+lts.test_07_dual_key_authorization_guarantees_paper_mode)
+Ensure Kotak adapter defaults to paper execution with is_live=False. ... ok
+test_08_production_time_gate_enforces_1515_cutoff (test_circuit_breakers_and_safe_halts.TestCircuitBreakersAndSafeHalts
+.test_08_production_time_gate_enforces_1515_cutoff)
+Production default (enforce_time_gate=True) strictly rejects orders after 15:15 IST. ... ok
+test_price_above_bankroll (test_execution_costs.TestAffordabilityAndBankrollRegression.test_price_above_bankroll)
+Stock priced at \u20b92,800 (Reliance) cannot be afforded with \u20b91,500. ... ok
+test_price_equal_to_bankroll (test_execution_costs.TestAffordabilityAndBankrollRegression.test_price_equal_to_bankroll)
+Stock priced at exactly \u20b91,500 cannot be afforded once entry friction is included. ... ok
+test_price_well_below_bankroll 
+(test_execution_costs.TestAffordabilityAndBankrollRegression.test_price_well_below_bankroll)
+Tata Steel at \u20b9150 is affordable, returns whole shares. ... ok
+test_unaffordable_stock_does_not_suppress_affordable_candidate (test_execution_costs.TestAffordabilityAndBankrollRegres
+sion.test_unaffordable_stock_does_not_suppress_affordable_candidate)
+Unaffordable high-priced stock must be ranked below affordable viable candidate. ... ok
+test_adverse_execution_prices (test_execution_costs.TestExecutionPricesSpreadAndSlippage.test_adverse_execution_prices)
+Verifies that buyers cross the ask + slippage and sellers cross the bid - slippage. ... ok
+test_conservative_stop_priority_long 
+(test_execution_costs.TestIntraBarClashConservativePriority.test_conservative_stop_priority_long)
+When Long and both high >= target and low <= stop in the same bar, stop-loss triggers. ... ok
+test_conservative_stop_priority_short 
+(test_execution_costs.TestIntraBarClashConservativePriority.test_conservative_stop_priority_short)
+When Short and both low <= target and high >= stop in the same bar, stop-loss triggers. ... ok
+test_live_trading_locked_by_default 
+(test_execution_costs.TestKotakAdapterPaperSafeguards.test_live_trading_locked_by_default)
+Verify LIVE_TRADING and ALLOW_REAL_ORDERS are False by default. ... ok
+test_order_rejected_when_exceeding_max_capital 
+(test_execution_costs.TestKotakAdapterPaperSafeguards.test_order_rejected_when_exceeding_max_capital)
+Order with notional > max_capital (\u20b91,500) must be rejected. ... ok
+test_second_concurrent_position_rejected 
+(test_execution_costs.TestKotakAdapterPaperSafeguards.test_second_concurrent_position_rejected)
+Adapter enforces max 1 concurrent position. ... ok
+test_buffer_fallback_source_triggers_exclusion 
+(test_execution_costs.TestStaleQuotesFailClosed.test_buffer_fallback_source_triggers_exclusion)
+Quotes from BUFFER_FALLBACK are fail-closed and excluded. ... ok
+test_stale_flag_triggers_exclusion (test_execution_costs.TestStaleQuotesFailClosed.test_stale_flag_triggers_exclusion)
+Quotes marked is_stale=True are completely excluded from opportunity scanning. ... ok
+test_penny_for_penny_statutory_breakdown 
+(test_execution_costs.TestStatutoryCostFormulas.test_penny_for_penny_statutory_breakdown)
+Verify exact calculation of roundtrip costs on a Rs. 1,000 buy / Rs. 1,010 sell. ... ok
+test_statutory_rates_and_units (test_execution_costs.TestStatutoryCostFormulas.test_statutory_rates_and_units)
+Verify regulatory statutory rates against official NSE CM intraday schedule. ... ok
+test_conservative_stop_priority_on_intrabar_clash 
+(test_exit_validation.TestExitValidation.test_conservative_stop_priority_on_intrabar_clash)
+Verify that when both stop and target are breached in the same bar, stop takes precedence. ... ok
+test_eod_square_off_at_1515 (test_exit_validation.TestExitValidation.test_eod_square_off_at_1515)
+Verify that any active position is forcibly liquidated at 15:15 IST. ... ok
+test_holding_timeout_exit (test_exit_validation.TestExitValidation.test_holding_timeout_exit)
+Verify that holding timeout liquidates position at exact horizon duration. ... ok
+test_next_bar_execution_no_lookahead (test_exit_validation.TestExitValidation.test_next_bar_execution_no_lookahead)
+Verify that a signal at bar t enters at bar t+1 open with friction, never at bar t close. ... ok
+test_insufficient_history_returns_invalid_prediction 
+(test_fail_closed_inference.TestFailClosedInference.test_insufficient_history_returns_invalid_prediction)
+Verifies that <15 candles returns prediction_valid=False and confidence=0.0. ... ok
+test_sufficient_history_returns_valid_prediction 
+(test_fail_closed_inference.TestFailClosedInference.test_sufficient_history_returns_valid_prediction)
+Verifies that 25 candles produce a valid prediction with prediction_valid=True. ... ok
+test_import_does_not_redirect_stdout 
+(test_live_trader_logging.TestLiveTraderLogging.test_import_does_not_redirect_stdout)
+Verify that importing live_trader does not hijack sys.stdout. ... ok
+test_log_structured_emits_valid_json_payload 
+(test_live_trader_logging.TestLiveTraderLogging.test_log_structured_emits_valid_json_payload)
+Verify log_structured outputs parseable JSON metadata. ... 2026-10-20 03:15:40,079 [INFO] [TEST_AUDIT_EVENT] Test 
+structured message | {"test_key": 42, "status": "OK", "model": "V3_60M"}
+ok
+test_production_runner_appends_logs_without_erasure 
+(test_live_trader_logging.TestLiveTraderLogging.test_production_runner_appends_logs_without_erasure)
+Verify that invoking run_live_trader.py --test-conn appends a new log line ... ok
+test_direction_mapping (test_model_validity.TestModelValidity.test_direction_mapping)
+Verify direction mapping: signals and directions strictly align with predicted returns. ... ok
+test_invalid_inference_fail_closed (test_model_validity.TestModelValidity.test_invalid_inference_fail_closed)
+Verify fail-closed behavior on short, empty, or corrupted data buffers. ... 
+C:\Users\sumuk\.gemini\antigravity-ide\scratch\ift\QA\models\one_min_predictor.py:183: FutureWarning: The default 
+fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any 
+non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  df["ret_1m"] = close.pct_change(1).fillna(0)
+C:\Users\sumuk\.gemini\antigravity-ide\scratch\ift\QA\models\one_min_predictor.py:184: FutureWarning: The default 
+fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any 
+non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  df["ret_3m"] = close.pct_change(3).fillna(0)
+C:\Users\sumuk\.gemini\antigravity-ide\scratch\ift\QA\models\one_min_predictor.py:185: FutureWarning: The default 
+fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any 
+non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  df["ret_5m"] = close.pct_change(5).fillna(0)
+C:\Users\sumuk\.gemini\antigravity-ide\scratch\ift\QA\models\one_min_predictor.py:186: FutureWarning: The default 
+fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any 
+non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  df["ret_10m"] = close.pct_change(10).fillna(0)
+ok
+test_leakage_prevention (test_model_validity.TestModelValidity.test_leakage_prevention)
+Verify that predictor features at bar t contain zero future information. ... ok
+test_probability_units_and_bounds (test_model_validity.TestModelValidity.test_probability_units_and_bounds)
+Verify that breakout probabilities and confidences are strictly bounded. ... ok
+test_01_real_order_flags_locked 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_01_real_order_flags_locked)
+Invariant 1: Real order placement must remain strictly disabled. ... ok
+test_02_fail_closed_on_stale_or_missing_data 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_02_fail_closed_on_stale_or_missing_data)
+Invariant 2: Stale quotes, BUFFER_FALLBACK, or empty feeds must yield zero opportunities. ... ok
+test_03_fallback_source_labels_accurate 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_03_fallback_source_labels_accurate)
+Invariant 3: Fallback data must be accurately labeled and never disguised as broker API. ... ok
+test_04_no_future_candle_leakage 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_04_no_future_candle_leakage)
+Invariant 4: Feature extractor must strictly use past bars with no forward lookahead. ... ok
+test_05_target_timestamp_alignment 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_05_target_timestamp_alignment)
+Invariant 5: Prediction made at time t must target t + 60s. ... ok
+test_06_unverified_outcome_not_scored 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_06_unverified_outcome_not_scored)
+Invariant 6: Predictions lacking a verified forward market price must be excluded from accuracy metrics. ... ok
+test_07_single_concurrent_position_enforced 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_07_single_concurrent_position_enforced)
+Invariant 7: Adapter strictly enforces max 1 concurrent position. ... ok
+test_08_transaction_costs_deducted_once 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_08_transaction_costs_deducted_once)
+Invariant 8: Statutory transaction costs and friction are calculated exactly once. ... ok
+test_09_loss_limit_breach_stops_entries 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_09_loss_limit_breach_stops_entries)
+Invariant 9: Reaching cumulative loss limit of Rs 30 triggers kill switch. ... ok
+test_10_missing_model_artifacts_fails_safely 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_10_missing_model_artifacts_fails_safely)
+Invariant 10: Engine fails safely without crashing when model weights are missing or corrupt. ... ok
+test_11_network_outage_does_not_trigger_fabricated_trades (test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvari
+ants.test_11_network_outage_does_not_trigger_fabricated_trades)
+Invariant 11: In the event of a network outage (empty quotes), zero trades are created. ... ok
+test_12_graph_nan_preservation_across_gaps 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_12_graph_nan_preservation_across_gaps)
+Invariant 12: Graph data generator must insert explicit NaNs across missing intervals. ... ok
+test_13_ledger_reconciliation_invariant 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_13_ledger_reconciliation_invariant)
+Invariant 13: Ending equity = Starting equity + Realized P&L + Unrealized P&L. ... ok
+test_14_runtime_state_persistence_preserves_bankroll 
+(test_oct16_anti_fraud_hardening.TestAntiFraudAndSafetyInvariants.test_14_runtime_state_persistence_preserves_bankroll)
+Invariant 14: Restoring runtime state maintains capital without compounding or resetting. ... ok
+test_affordability_below_equal_above_bankroll 
+(test_opportunity_engine.TestOpportunityEngine.test_affordability_below_equal_above_bankroll)
+P0 Regression: Verifies whole-share affordability for prices: ... ok
+test_cash_reserve_and_entry_cost_affordability 
+(test_opportunity_engine.TestOpportunityEngine.test_cash_reserve_and_entry_cost_affordability)
+P0 Regression: Verifies that cash reserve reduces deployable bankroll. ... ok
+test_regime_detector_identifies_chop 
+(test_opportunity_engine.TestOpportunityEngine.test_regime_detector_identifies_chop)
+Verifies flat sideways candles are detected as CHOP_REGIME with 0.0 multiplier. ... ok
+test_regime_detector_identifies_momentum_breakout 
+(test_opportunity_engine.TestOpportunityEngine.test_regime_detector_identifies_momentum_breakout)
+Verifies strong volume surge and range expansion is detected as MOMENTUM_BREAKOUT. ... ok
+test_scan_and_rank_opportunities_produces_ranking_table 
+(test_opportunity_engine.TestOpportunityEngine.test_scan_and_rank_opportunities_produces_ranking_table)
+Verifies scanning produces ranked candidates sorted by Opportunity Score. ... ok
+test_selection_explains_comparative_rationale 
+(test_opportunity_engine.TestOpportunityEngine.test_selection_explains_comparative_rationale)
+Verifies top opportunity selection includes comparative rationale. ... ok
+test_unaffordable_stock_cannot_suppress_affordable_candidate 
+(test_opportunity_engine.TestOpportunityEngine.test_unaffordable_stock_cannot_suppress_affordable_candidate)
+P0 Regression: Verifies that an unaffordable high-priced stock (e.g. TCS @ \u20b93,500) ... ok
+test_universe_registry_contains_50_plus_benchmarks 
+(test_opportunity_engine.TestOpportunityEngine.test_universe_registry_contains_50_plus_benchmarks)
+Verifies full verified NSE universe coverage. ... ok
+test_affordable_contract_passes_capital_check 
+(test_options_engine.TestOptionsEngine.test_affordable_contract_passes_capital_check)
+Verifies that an affordable contract (<= \u20b91,500) with sufficient edge produces BUY_CE. ... ok
+test_bearish_prediction_evaluates_pe (test_options_engine.TestOptionsEngine.test_bearish_prediction_evaluates_pe)
+Verifies that bearish underlying predictions evaluate PE options. ... ok
+test_black_scholes_greeks_invariants (test_options_engine.TestOptionsEngine.test_black_scholes_greeks_invariants)
+Verifies mathematical properties of European option Greeks. ... ok
+test_expensive_atm_contracts_rejected_under_1500_bankroll 
+(test_options_engine.TestOptionsEngine.test_expensive_atm_contracts_rejected_under_1500_bankroll)
+Verifies that contracts exceeding \u20b91,500 are rejected with INSUFFICIENT_CASH. ... ok
+test_paper_execution_and_square_off (test_options_engine.TestOptionsEngine.test_paper_execution_and_square_off)
+Verifies full trade lifecycle: execution, stop-loss, and ledger updates. ... ok
+test_statutory_charges_decomposition (test_options_engine.TestOptionsEngine.test_statutory_charges_decomposition)
+Verifies official NSE options fee structure. ... ok
+test_uncertain_direction_returns_hold (test_options_engine.TestOptionsEngine.test_uncertain_direction_returns_hold)
+Verifies that small moves or low confidence output HOLD. ... ok
+test_invariant_1_cash_never_becomes_negative 
+(test_portfolio_accounting.TestPortfolioAccountingInvariants.test_invariant_1_cash_never_becomes_negative)
+Invariant 1: Cash balance never drops below zero at any point in time. ... ok
+test_invariant_2_orders_cannot_exceed_available_capital 
+(test_portfolio_accounting.TestPortfolioAccountingInvariants.test_invariant_2_orders_cannot_exceed_available_capital)
+Invariant 2: No trade entry cost can exceed available cash at time of entry. ... ok
+test_invariant_3_open_positions_obey_configured_maximum 
+(test_portfolio_accounting.TestPortfolioAccountingInvariants.test_invariant_3_open_positions_obey_configured_maximum)
+Invariant 3: Single position limit is strictly enforced (no overlapping open positions). ... ok
+test_invariant_4_fill_provenance_and_valid_timestamps 
+(test_portfolio_accounting.TestPortfolioAccountingInvariants.test_invariant_4_fill_provenance_and_valid_timestamps)
+Invariant 4: Every fill has prediction provenance and chronologically valid timestamps. ... ok
+test_invariant_5_pnl_reconciles_from_ledger_to_equity 
+(test_portfolio_accounting.TestPortfolioAccountingInvariants.test_invariant_5_pnl_reconciles_from_ledger_to_equity)
+Invariant 5: Ending cash exactly equals Starting cash + sum(Net P&L) within 1 paisa. ... ok
+test_invariant_6_drawdown_bounded_within_100_percent 
+(test_portfolio_accounting.TestPortfolioAccountingInvariants.test_invariant_6_drawdown_bounded_within_100_percent)
+Invariant 6: Drawdown is derived from the equity curve and bounded within 0% to 100%. ... ok
+test_invariant_7_deterministic_replay_produces_identical_ledger (test_portfolio_accounting.TestPortfolioAccountingInvar
+iants.test_invariant_7_deterministic_replay_produces_identical_ledger)
+Invariant 7: Replaying the recorded data reproduces the exact same trade count, P&L, and ledger. ... ok
+test_process_incoming_quotes_matures_prediction 
+(test_provenance_tracker.TestProvenanceTracker.test_process_incoming_quotes_matures_prediction)
+Verifies that process_incoming_quotes matches predictions aged 50-90s and writes to outcomes stream. ... ok
+test_record_actual_outcome_pairs_and_evaluates 
+(test_provenance_tracker.TestProvenanceTracker.test_record_actual_outcome_pairs_and_evaluates)
+Verifies outcome pairing computes error and correctness. ... ok
+test_record_prediction_persists_full_metadata 
+(test_provenance_tracker.TestProvenanceTracker.test_record_prediction_persists_full_metadata)
+Verifies prediction event is logged with full feature provenance. ... ok
+test_duplicate_and_stale_ticks_rejected 
+(test_sampling_mismatch_regression.TestSamplingMismatchRegression.test_duplicate_and_stale_ticks_rejected)
+Verifies duplicate and stale ticks are cleanly rejected. ... 2026-10-20 03:16:00,859 [WARNING] Rejected stale quote 
+for INFY.NS (source: None)
+ok
+test_live_trader_buffer_timeframe_validation 
+(test_sampling_mismatch_regression.TestSamplingMismatchRegression.test_live_trader_buffer_timeframe_validation)
+Verifies live trader validate_buffer_timeframe detects 10s sampling defects. ... ok
+test_missing_intervals_gap_does_not_fabricate_candles (test_sampling_mismatch_regression.TestSamplingMismatchRegression
+.test_missing_intervals_gap_does_not_fabricate_candles)
+Verifies that an outage gap does NOT create synthetic fabricated bars. ... 2026-10-20 03:16:00,859 [INFO] Market data 
+gap detected for INFY.NS: 6.0 mins elapsed between 2026-10-19 09:15:00 IST and 09:21:00 (No synthetic bars fabricated)
+ok
+test_opportunity_engine_rejects_subminute_sampling_intervals (test_sampling_mismatch_regression.TestSamplingMismatchReg
+ression.test_opportunity_engine_rejects_subminute_sampling_intervals)
+Proof of Defense-in-Depth: If a buffer containing 10-second intervals ... 2026-10-20 03:16:00,861 [WARNING] 
+REJECTED_SAMPLING_MISMATCH: Sub-minute interval detected (10.0s < 45s)
+ok
+test_six_10s_observations_do_not_become_six_bars 
+(test_sampling_mismatch_regression.TestSamplingMismatchRegression.test_six_10s_observations_do_not_become_six_bars)
+Proof of Fix: Six 10-second quotes in the same minute must update ... ok
+test_forced_eod_exit_appears_in_ledger 
+(test_simulation_eod_invariants.TestSimulationEODInvariants.test_forced_eod_exit_appears_in_ledger)
+Rule 4: Forced EOD exit appears in ledger with reason INTRADAY_SQUARE_OFF. ... ok
+test_guaranteed_rms_eod_exit (test_simulation_eod_invariants.TestSimulationEODInvariants.test_guaranteed_rms_eod_exit)
+Proves force_eod_square_off is 100% filled with zero rejection even under SEVERE conditions. ... ok
+test_no_overnight_pnl_leakage 
+(test_simulation_eod_invariants.TestSimulationEODInvariants.test_no_overnight_pnl_leakage)
+Rule 3: Zero overnight gap P&L can enter an intraday strategy ledger. ... ok
+test_no_position_at_next_days_0915 
+(test_simulation_eod_invariants.TestSimulationEODInvariants.test_no_position_at_next_days_0915)
+Rule 2: No position exists at next day's 09:15 IST. ... ok
+test_position_cannot_survive_1515 
+(test_simulation_eod_invariants.TestSimulationEODInvariants.test_position_cannot_survive_1515)
+Rule 1: Position cannot survive past 15:15 IST. ... ok
+test_realized_pnl_included_in_daily_loss 
+(test_simulation_eod_invariants.TestSimulationEODInvariants.test_realized_pnl_included_in_daily_loss)
+Rule 5: Realized P&L from EOD square-off is included in daily loss tracking. ... ok
+test_01_valid_float_output (test_specialist_output_regression.TestSpecialistOutputHandling.test_01_valid_float_output)
+Verifies valid float alpha is parsed, validated, and produces viable opportunity when concurrent. ... ok
+test_02_valid_dict_output_with_required_fields 
+(test_specialist_output_regression.TestSpecialistOutputHandling.test_02_valid_dict_output_with_required_fields)
+Verifies dict output containing 'predicted_alpha' is validated and parsed correctly. ... ok
+test_03_valid_1d_size_1_array_output 
+(test_specialist_output_regression.TestSpecialistOutputHandling.test_03_valid_1d_size_1_array_output)
+Verifies 1D scalar-equivalent array output is unpacked and validated. ... ok
+test_04_missing_specialist_output_fails_safely_no_fabricated_scores (test_specialist_output_regression.TestSpecialistOu
+tputHandling.test_04_missing_specialist_output_fails_safely_no_fabricated_scores)
+Verifies missing specialist output (None) rejects safely without fabricating score or confidence. ... ok
+test_05_malformed_dict_missing_required_fields 
+(test_specialist_output_regression.TestSpecialistOutputHandling.test_05_malformed_dict_missing_required_fields)
+Verifies dict missing 'predicted_alpha' or 'alpha' is rejected with explicit reason. ... ok
+test_06_malformed_shape_rejected 
+(test_specialist_output_regression.TestSpecialistOutputHandling.test_06_malformed_shape_rejected)
+Verifies multi-element or multi-dimensional array is rejected with explicit shape mismatch. ... ok
+test_07_malformed_type_rejected 
+(test_specialist_output_regression.TestSpecialistOutputHandling.test_07_malformed_type_rejected)
+Verifies non-numeric types (strings, booleans, objects) are rejected safely. ... ok
+test_08_non_finite_outputs_nan_and_inf_rejected 
+(test_specialist_output_regression.TestSpecialistOutputHandling.test_08_non_finite_outputs_nan_and_inf_rejected)
+Verifies NaN, +Inf, -Inf outputs are rejected with explicit non-finite reason. ... ok
+test_09_specialist_weights_validation_and_fail_closed 
+(test_specialist_output_regression.TestSpecialistOutputHandling.test_09_specialist_weights_validation_and_fail_closed)
+Verifies _predict_specialist_linear validates weights schema, lengths, and returns None on defects. ... ok
+test_duplicate_instance_prevention (test_startup_reliability.TestStartupReliability.test_duplicate_instance_prevention)
+Verify that starting a second instance while a process is running aborts immediately. ... 2026-10-20 03:16:04,262 
+[INFO] [ABORT_DUPLICATE_INSTANCE] Another AlphaNSE Live Trader process (PID 27008) is already active! | 
+{"existing_pid": 27008}
+ok
+test_restart_recovery_restores_active_positions 
+(test_startup_reliability.TestStartupReliability.test_restart_recovery_restores_active_positions)
+Verify that restart recovery restores active open positions from runtime_state.json. ... ok
+test_safe_termination_refuses_when_active_positions_exist 
+(test_startup_reliability.TestStartupReliability.test_safe_termination_refuses_when_active_positions_exist)
+Verify that safe_terminate_trader refuses termination if open positions exist. ... ok
+test_stale_heartbeat_detection (test_startup_reliability.TestStartupReliability.test_stale_heartbeat_detection)
+Verify that a heartbeat older than 120 seconds is correctly detected as stale. ... ok
+
+======================================================================
+  HURDLE BOUNDARY TEST RESULTS (Ôé╣0.79 vs Ôé╣0.80 vs Ôé╣0.81)
+======================================================================
+  Target: Ôé╣0.79 | Calculated Net: Ôé╣0.79 | Decision: HOLD | Reason: INSUFFICIENT_NET_INR (Expected Net Ôé╣0.79 < Hurdle Ôé╣0.80 | Gross Ôé╣7.40 vs Cost Ôé╣6.61)
+  Target: Ôé╣0.80 | Calculated Net: Ôé╣0.80 | Decision: TRADE | Reason: None
+  Target: Ôé╣0.81 | Calculated Net: Ôé╣0.81 | Decision: TRADE | Reason: None
+======================================================================
+
+======================================================================
+  SYNTHETIC PROFITABLE OPPORTUNITY ÔÇö ECONOMIC CHAIN VERIFICATION
+======================================================================
+  Model Prediction (60m):             +25.00 bps
+  Price per Share:                    Ôé╣500.00
+  Available Capital:                  Ôé╣5000.00
+  Max Allocation (95%):               Ôé╣4750.00
+  Affordable Whole Shares:            9 shares
+  Traded Notional:                    Ôé╣4500.00
+  Gross Expected Return (Ôé╣):          Ôé╣11.25
+----------------------------------------------------------------------
+  Brokerage (Zerodha):                Ôé╣2.70
+  STT (0.025% sell side):             Ôé╣1.13
+  Exchange Turnover (NSE):            Ôé╣0.28
+  SEBI Charges:                       Ôé╣0.0090
+  Stamp Duty (0.003% buy side):       Ôé╣0.14
+  GST (18% on fees):                  Ôé╣0.54
+  Total Statutory Fees:               Ôé╣4.79
+  Spread + Slippage Friction:         Ôé╣1.82
+  Total Roundtrip Friction:           Ôé╣6.61 (14.7 bps)
+----------------------------------------------------------------------
+  Expected Net Return (Ôé╣):            Ôé╣4.64 (10.3 bps)
+  Hurdle Requirement:                 ÔëÑ Ôé╣0.80 (and > 0 bps)
+  Decision Verdict:                   TRADE (VIABLE)
+======================================================================
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+ÔØî [ABORT] Another AlphaNSE Live Trader process (PID 27008) is already active!
+   Terminate the existing process first before starting a new instance.
+[OK] Loaded active quantitative model weights: active_model_weights.json
+[INIT] Loading Machine Learning Tree Ensemble (CatBoost, LightGBM, XGBoost)...
+Loaded pre-trained 1-minute models successfully (30 features).
+[OK] Machine Learning Ensemble loaded successfully.
+­ƒöä [RECOVERY] Restored 1 active open position(s) from previous runtime state.
+test_01_ist_aware_and_naive_timestamps 
+(test_timezone_regression.TestTimezoneConsistency.test_01_ist_aware_and_naive_timestamps)
+Verifies IST timestamps (both timezone-aware and naive) produce exact identical time features. ... ok
+test_02_utc_timestamps_convert_identically_to_ist 
+(test_timezone_regression.TestTimezoneConsistency.test_02_utc_timestamps_convert_identically_to_ist)
+Verifies UTC timestamps convert to canonical IST without being clipped to 0 or shifted. ... ok
+test_03_daylight_independent_conversion 
+(test_timezone_regression.TestTimezoneConsistency.test_03_daylight_independent_conversion)
+Verifies Asia/Kolkata maintains strict UTC+05:30 offset across summer and winter dates. ... ok
+test_04_session_boundaries_and_phases 
+(test_timezone_regression.TestTimezoneConsistency.test_04_session_boundaries_and_phases)
+Verifies session boundaries: pre-market, open rush, morning, midday, close rush, post-market. ... ok
+test_05_existing_datasets_not_silently_shifted 
+(test_timezone_regression.TestTimezoneConsistency.test_05_existing_datasets_not_silently_shifted)
+Verifies existing datasets on disk retain canonical 09:15 market open without corruption. ... ok
+test_consensus_agreement_thresholds (test_unified_ensemble.TestUnifiedEnsemble.test_consensus_agreement_thresholds) 
+... ok
+test_daily_loss_circuit_breaker (test_unified_ensemble.TestUnifiedEnsemble.test_daily_loss_circuit_breaker) ... ok
+test_fail_closed_airgap_security (test_unified_ensemble.TestUnifiedEnsemble.test_fail_closed_airgap_security) ... ok
+test_macro_regime_filtering (test_unified_ensemble.TestUnifiedEnsemble.test_macro_regime_filtering) ... ok
+test_risk_engine_capital_and_position_limits 
+(test_unified_ensemble.TestUnifiedEnsemble.test_risk_engine_capital_and_position_limits) ... ok
+test_specialist_signal_schema (test_unified_ensemble.TestUnifiedEnsemble.test_specialist_signal_schema) ... ok
+test_stagnation_timeout_chop_exit (test_unified_ensemble.TestUnifiedEnsemble.test_stagnation_timeout_chop_exit) ... ok
+test_trailing_stop_ratchet (test_unified_ensemble.TestUnifiedEnsemble.test_trailing_stop_ratchet) ... ok
+test_transaction_cost_hurdle (test_unified_ensemble.TestUnifiedEnsemble.test_transaction_cost_hurdle) ... ok
+test_default_config_loads_valid (unit.test_config.TestConfig.test_default_config_loads_valid) ... ok
+test_invalid_config_raises (unit.test_config.TestConfig.test_invalid_config_raises) ... ok
+test_market_hours_validation (unit.test_config.TestConfig.test_market_hours_validation) ... ok
+test_risk_config_bounds (unit.test_config.TestConfig.test_risk_config_bounds) ... ok
+test_brokerage_cap (unit.test_costs.TestCostEngine.test_brokerage_cap) ... ok
+test_roundtrip_cost_decomposition (unit.test_costs.TestCostEngine.test_roundtrip_cost_decomposition) ... ok
+test_viability_gate (unit.test_costs.TestCostEngine.test_viability_gate) ... ok
+test_champion_promotion_allowed_when_data_gate_cleared 
+(unit.test_model_registry.TestModelRegistry.test_champion_promotion_allowed_when_data_gate_cleared) ... ok
+test_champion_promotion_blocked_by_data_blocked_gate 
+(unit.test_model_registry.TestModelRegistry.test_champion_promotion_blocked_by_data_blocked_gate) ... ok
+test_model_registration_and_shadow_promotion 
+(unit.test_model_registry.TestModelRegistry.test_model_registration_and_shadow_promotion) ... ok
+test_live_mode_raises_physical_error 
+(unit.test_paper_isolation.TestPaperIsolation.test_live_mode_raises_physical_error) ... ok
+test_paper_mode_simulates_fill (unit.test_paper_isolation.TestPaperIsolation.test_paper_mode_simulates_fill) ... ok
+test_research_mode_blocks_all_orders 
+(unit.test_paper_isolation.TestPaperIsolation.test_research_mode_blocks_all_orders) ... ok
+test_illegal_lifecycle_skips_fail (unit.test_states.TestStateMachines.test_illegal_lifecycle_skips_fail) ... ok
+test_research_lifecycle_data_blocked_gate 
+(unit.test_states.TestStateMachines.test_research_lifecycle_data_blocked_gate) ... ok
+test_runtime_halt_does_not_alter_research_state 
+(unit.test_states.TestStateMachines.test_runtime_halt_does_not_alter_research_state)
+Architectural Invariant: Runtime halts never regress the Research Lifecycle. ... ok
+test_runtime_safety_auto_recovery (unit.test_states.TestStateMachines.test_runtime_safety_auto_recovery) ... ok
+
+----------------------------------------------------------------------
+Ran 353 tests in 45.477s
+
+OK
+Loaded pre-trained 1-minute models successfully (30 features).
+================================================================================
+ TEST RUN SUMMARY
+================================================================================
+ Total Tests Run:   353
+ Total Passed:      353
+ Total Failures:    0
+ Total Errors:      0
+ Execution Time:    52.046 seconds
+================================================================================
+ VERDICT: ALL PHASE 1 & 2 TESTS PASSED [SUCCESS]
+================================================================================
+EXIT_CODE: 0

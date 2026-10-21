@@ -63,9 +63,11 @@ def build_and_retrain():
                 else:
                     continue
 
-                sym_df.columns = [str(c).lower() for c in sym_df.columns]
                 sym_df = sym_df.reset_index()
+                sym_df.columns = [str(c).lower() for c in sym_df.columns]
                 time_col = "datetime" if "datetime" in sym_df.columns else "date" if "date" in sym_df.columns else "index"
+                if time_col not in sym_df.columns and "timestamp" not in sym_df.columns:
+                    time_col = sym_df.columns[0]
                 sym_df = sym_df.rename(columns={time_col: "timestamp"})
                 sym_df["symbol"] = symbol
                 sym_df = sym_df.dropna(subset=["open", "high", "low", "close"])
@@ -85,11 +87,16 @@ def build_and_retrain():
         for sym, grp in m_df.groupby("symbol"):
             hist_dfs.append(grp.copy())
 
-    # 3. Normalize timestamps
+    # 3. Normalize timestamps to canonical Asia/Kolkata (Indian Standard Time) convention
     def normalize_tz(df):
-        if "timestamp" in df.columns and hasattr(df["timestamp"].dt, "tz"):
-            if df["timestamp"].dt.tz is not None:
-                df["timestamp"] = df["timestamp"].dt.tz_convert(None)
+        if "timestamp" in df.columns:
+            ts = pd.to_datetime(df["timestamp"])
+            if hasattr(ts.dt, "tz"):
+                if ts.dt.tz is None:
+                    # Naive timestamps represent Indian market hours (09:15-15:30 IST)
+                    df["timestamp"] = ts.dt.tz_localize("Asia/Kolkata")
+                else:
+                    df["timestamp"] = ts.dt.tz_convert("Asia/Kolkata")
         return df
 
     for d in real_dfs:

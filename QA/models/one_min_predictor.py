@@ -8,12 +8,16 @@ and probability of continuation/breakout is high.
 
 import os
 import sys
+import math
 import json
 import joblib
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
+import logging
 import yfinance as yf
+
+logger = logging.getLogger("OneMinPredictor")
 
 from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
@@ -263,11 +267,18 @@ class OneMinPredictor:
 
         # === Phase 3: New Features ===
 
-        # 13. Time-of-Day (sin/cos encoding of minute within trading session)
+        # 13. Time-of-Day (sin/cos encoding of minute within trading session in canonical Asia/Kolkata)
         if "timestamp" in df.columns:
             ts = pd.to_datetime(df["timestamp"])
-            minutes_from_open = (ts.dt.hour * 60 + ts.dt.minute) - (9 * 60 + 15)  # Minutes since 9:15 AM
-            minutes_from_open = minutes_from_open.clip(0, 375)  # 375 = 6h15m trading session
+            if hasattr(ts.dt, "tz"):
+                if ts.dt.tz is None:
+                    # Naive timestamps represent Indian market hours (09:15-15:30 IST)
+                    ts = ts.dt.tz_localize("Asia/Kolkata")
+                else:
+                    # Timezone-aware timestamps (UTC, IST, or other) converted to canonical Asia/Kolkata
+                    ts = ts.dt.tz_convert("Asia/Kolkata")
+            minutes_from_open = (ts.dt.hour * 60 + ts.dt.minute) - (9 * 60 + 15)  # Minutes since 9:15 AM IST
+            minutes_from_open = minutes_from_open.clip(0, 375).fillna(0)  # 375 = 6h15m trading session
             df["time_sin"] = np.sin(2 * np.pi * minutes_from_open / 375).fillna(0)
             df["time_cos"] = np.cos(2 * np.pi * minutes_from_open / 375).fillna(0)
             # Session phase: 0=open rush (0-30min), 1=morning (30-120), 2=midday (120-240), 3=close rush (240-375)
@@ -434,15 +445,19 @@ class OneMinPredictor:
         """
         if len(latest_candles) < 15:
             last_p = float(latest_candles.iloc[-1]["close"]) if not latest_candles.empty else 0.0
+            sym = str(latest_candles.iloc[-1].get("symbol", "")) if not latest_candles.empty else ""
             return {
-                "symbol": latest_candles.iloc[-1].get("symbol", "UNKNOWN") if not latest_candles.empty else "",
-                "company": STOCK_UNIVERSE.get(str(latest_candles.iloc[-1].get("symbol", "")), "UNKNOWN"),
+                "symbol": sym or "UNKNOWN",
+                "company": STOCK_UNIVERSE.get(sym, "UNKNOWN"),
                 "current_price": last_p,
                 "predicted_price_1m": last_p,
                 "predicted_return_pct": 0.0,
-                "confidence": 50.0,
-                "raw_breakout_prob": 50.0,
+                "confidence": 0.0,
+                "raw_breakout_prob": 0.0,
                 "signal": "HOLD",
+                "direction": "UNCERTAIN",
+                "prediction_valid": False,
+                "error": f"INSUFFICIENT_HISTORY: Only {len(latest_candles)} candles available, minimum 15 required",
                 "profit_threshold_pct": profit_threshold * 100,
                 "timestamp": datetime.now().isoformat()
             }
@@ -452,6 +467,21 @@ class OneMinPredictor:
         X = feat_df[self.feature_cols].iloc[[-1]].ffill().fillna(0)
 
         current_price = float(last_row["close"])
+        if math.isnan(current_price) or current_price <= 0:
+            return {
+                "symbol": str(last_row.get("symbol", "UNKNOWN")),
+                "company": STOCK_UNIVERSE.get(str(last_row.get("symbol", "")), "UNKNOWN"),
+                "current_price": 0.0,
+                "predicted_price_1m": 0.0,
+                "predicted_return_pct": 0.0,
+                "confidence": 0.0,
+                "raw_breakout_prob": 0.0,
+                "signal": "HOLD",
+                "direction": "UNCERTAIN",
+                "prediction_valid": False,
+                "error": "INVALID_PRICE_SERIES: Current price is NaN or <= 0",
+                "timestamp": datetime.now().isoformat()
+            }
 
         # Predict expected return using ensemble average
         preds = []
@@ -459,17 +489,27 @@ class OneMinPredictor:
             try:
                 p = model.predict(X)[0]
                 preds.append(float(p))
-            except Exception:
-                pass
+            except Exception as reg_err:
+                logger.warning(f"Regressor {name} prediction failed: {reg_err}")
 
         if preds:
             pred_return = float(np.mean(preds))
         else:
-            # Calibrated fallback rule-based micro-alpha
-            mom = float(last_row.get("ret_1m", 0.0))
-            rsi = float(last_row.get("micro_rsi_7", 50.0))
-            vwap_dist = float(last_row.get("micro_vwap_dist", 0.0))
-            pred_return = float((mom * 0.4) + ((rsi - 50) / 100 * 0.005) - (vwap_dist * 0.2))
+            # Model inference failed: report failure honestly, do NOT substitute heuristics
+            return {
+                "symbol": latest_candles.iloc[-1].get("symbol", "UNKNOWN"),
+                "company": STOCK_UNIVERSE.get(str(latest_candles.iloc[-1].get("symbol", "")), "UNKNOWN"),
+                "current_price": current_price,
+                "predicted_price_1m": current_price,
+                "predicted_return_pct": 0.0,
+                "confidence": 0.0,
+                "raw_breakout_prob": 0.0,
+                "signal": "HOLD",
+                "direction": "UNCERTAIN",
+                "prediction_valid": False,
+                "error": "REGRESSORS_INFERENCE_FAILED",
+                "timestamp": datetime.now().isoformat()
+            }
 
         # Phase 3: Quantile upper-bound prediction (75th percentile of possible returns)
         try:
@@ -492,29 +532,50 @@ class OneMinPredictor:
         sym_atr = float(last_row.get("micro_atr_14", 0.0025))
 
         # Dynamic Volatility Hurdle Adjustment:
-        # High-beta stocks require higher profit expectation; low-beta stocks scale proportionally
         vol_multiplier = float(np.clip(sym_atr / 0.0025, 0.75, 1.50))
         effective_threshold = max(0.0006, profit_threshold * vol_multiplier)
-
-        # Pure ML Ensemble Output - let learned relationships stand without hard-coded distortion.
-        # (Momentum, RSI, and candlestick patterns are already features ingested by the ensemble)
 
         # Classify probability of exceeding threshold
         try:
             raw_breakout_prob = float(self.classifier.predict_proba(X)[0][1])
-        except Exception:
-            raw_breakout_prob = 0.5 + (pred_return / 0.01)
-            raw_breakout_prob = float(np.clip(raw_breakout_prob, 0.10, 0.95))
-
-        # Dynamic Per-Stock Confidence Calibration (Phase 2.1)
-        # Penalizes symbols with poor historical hit-rates, rewards high-precision leaders
-        calibrated_confidence = float(np.clip(raw_breakout_prob * confidence_multiplier, 0.05, 0.99))
+            # Directional confidence centered at 50% (neutral), reflecting probability of move in predicted direction
+            # Preserves raw_breakout_prob for tail risk tracking while preventing directional misclassification
+            if pred_return >= 0:
+                directional_conf = float(np.clip(0.50 + (pred_return * 50.0), 0.10, 0.95))
+            else:
+                directional_conf = float(np.clip(0.50 + (abs(pred_return) * 50.0), 0.10, 0.95))
+            calibrated_confidence = float(np.clip(directional_conf * confidence_multiplier, 0.10, 0.99))
+        except Exception as e:
+            # Report classifier failure honestly - never fabricate synthetic probability
+            return {
+                "symbol": latest_candles.iloc[-1].get("symbol", "UNKNOWN"),
+                "company": STOCK_UNIVERSE.get(str(latest_candles.iloc[-1].get("symbol", "")), "UNKNOWN"),
+                "current_price": current_price,
+                "predicted_price_1m": current_price,
+                "predicted_return_pct": 0.0,
+                "confidence": 0.0,
+                "raw_breakout_prob": 0.0,
+                "signal": "HOLD",
+                "direction": "UNCERTAIN",
+                "prediction_valid": False,
+                "error": f"CLASSIFIER_FAILED: {e}",
+                "timestamp": datetime.now().isoformat()
+            }
 
         predicted_price = current_price * (1 + pred_return)
 
         # Trigger BUY if predicted return >= effective_threshold and calibrated breakout confidence is supportive
         is_buy = (pred_return >= effective_threshold) and (calibrated_confidence >= 0.45)
-        signal = "BUY" if is_buy else "HOLD"
+        # Trigger SHORT SELL if predicted return <= -effective_threshold (price expected to FALL)
+        # NSE allows intraday short selling on all NSE liquid stocks — sell first, buy back same day
+        is_short = (pred_return <= -effective_threshold) and (calibrated_confidence >= 0.45)
+
+        if is_buy:
+            signal = "BUY"   # Long: price expected to rise
+        elif is_short:
+            signal = "SELL"  # Short: price expected to fall — sell first, buy back lower
+        else:
+            signal = "HOLD"
 
         return {
             "symbol": str(last_row["symbol"]),
@@ -525,6 +586,9 @@ class OneMinPredictor:
             "confidence": round(calibrated_confidence * 100, 1),
             "raw_breakout_prob": round(raw_breakout_prob * 100, 1),
             "signal": signal,
+            "direction": "LONG" if is_buy else ("SHORT" if is_short else "FLAT"),
+            "prediction_valid": True,
+            "error": None,
             "profit_threshold_pct": round(effective_threshold * 100, 2),
             "timestamp": last_row["timestamp"].isoformat() if hasattr(last_row["timestamp"], "isoformat") else str(last_row["timestamp"]),
             "micro_rsi": round(float(last_row.get("micro_rsi_7", 50)), 1),
@@ -533,3 +597,154 @@ class OneMinPredictor:
             "vol_zscore": round(vol_zscore, 2),
             "wick_pressure": round(wick_pressure, 2)
         }
+
+    def predict_batch_1m(
+        self,
+        candle_dfs_dict: dict,
+        profit_threshold: float = 0.0008,
+        confidence_multiplier: float = 1.0
+    ) -> dict:
+        """
+        Vectorized multi-instrument prediction.
+        Extracts features and evaluates regressors, quantile regressor, and classifier
+        in single batched matrix operations across all eligible symbols.
+        Mathematically equivalent to calling predict_next_1m sequentially.
+        """
+        results = {}
+        if not candle_dfs_dict:
+            return results
+
+        valid_symbols = []
+        valid_x_rows = []
+        valid_last_rows = []
+
+        for sym, candles in candle_dfs_dict.items():
+            if candles is None or len(candles) < 15:
+                last_p = float(candles.iloc[-1]["close"]) if (candles is not None and not candles.empty) else 0.0
+                sym_str = str(candles.iloc[-1].get("symbol", sym)) if (candles is not None and not candles.empty) else sym
+                results[sym] = {
+                    "symbol": sym_str,
+                    "company": STOCK_UNIVERSE.get(sym_str, sym_str),
+                    "current_price": last_p,
+                    "predicted_price_1m": last_p,
+                    "predicted_return_pct": 0.0,
+                    "confidence": 0.0,
+                    "raw_breakout_prob": 0.0,
+                    "signal": "HOLD",
+                    "direction": "UNCERTAIN",
+                    "prediction_valid": False,
+                    "error": f"INSUFFICIENT_HISTORY: Only {len(candles) if candles is not None else 0} candles available, minimum 15 required",
+                    "profit_threshold_pct": profit_threshold * 100,
+                    "timestamp": datetime.now().isoformat()
+                }
+                continue
+
+            try:
+                feat_df = self.extract_features_1m(candles)
+                last_row = feat_df.iloc[-1]
+                x_row = feat_df[self.feature_cols].iloc[[-1]].ffill().fillna(0)
+                valid_symbols.append(sym)
+                valid_last_rows.append(last_row)
+                valid_x_rows.append(x_row)
+            except Exception as e:
+                results[sym] = {
+                    "symbol": sym,
+                    "company": STOCK_UNIVERSE.get(sym, sym),
+                    "current_price": 0.0,
+                    "predicted_price_1m": 0.0,
+                    "predicted_return_pct": 0.0,
+                    "confidence": 0.0,
+                    "raw_breakout_prob": 0.0,
+                    "signal": "HOLD",
+                    "direction": "UNCERTAIN",
+                    "prediction_valid": False,
+                    "error": f"FEATURE_EXTRACTION_FAILED: {e}",
+                    "timestamp": datetime.now().isoformat()
+                }
+
+        if not valid_symbols:
+            return results
+
+        # Stack into single batch feature matrix
+        x_batch = pd.concat(valid_x_rows, ignore_index=True)
+
+        # 1. Batched Regressors Inference
+        reg_preds = []
+        for name, model in self.regressors.items():
+            try:
+                p = model.predict(x_batch)
+                reg_preds.append(p)
+            except Exception as reg_err:
+                logger.warning(f"Batch regressor {name} failed: {reg_err}")
+
+        if reg_preds:
+            batch_pred_returns = np.mean(reg_preds, axis=0)
+        else:
+            batch_pred_returns = np.zeros(len(x_batch))
+
+        # 2. Batched Quantile Regressor Inference
+        try:
+            batch_q75 = self.quantile_regressor.predict(x_batch)
+        except Exception:
+            batch_q75 = batch_pred_returns
+
+        # 3. Batched Breakout Classifier Inference
+        try:
+            batch_probs = self.classifier.predict_proba(x_batch)[:, 1]
+        except Exception:
+            batch_probs = np.zeros(len(x_batch))
+
+        # Vectorized assembly of per-symbol outputs
+        for i, sym in enumerate(valid_symbols):
+            last_row = valid_last_rows[i]
+            current_price = float(last_row["close"])
+            pred_return = float(batch_pred_returns[i])
+            raw_breakout_prob = float(batch_probs[i])
+            if pred_return >= 0:
+                directional_conf = float(np.clip(0.50 + (pred_return * 50.0), 0.10, 0.95))
+            else:
+                directional_conf = float(np.clip(0.50 + (abs(pred_return) * 50.0), 0.10, 0.95))
+            calibrated_confidence = float(np.clip(directional_conf * confidence_multiplier, 0.10, 0.99))
+
+            sym_atr = float(last_row.get("micro_atr_14", 0.0025))
+            vol_multiplier = float(np.clip(sym_atr / 0.0025, 0.75, 1.50))
+            effective_threshold = max(0.0006, profit_threshold * vol_multiplier)
+
+            predicted_price = current_price * (1.0 + pred_return)
+            is_buy = (pred_return >= effective_threshold) and (calibrated_confidence >= 0.45)
+            is_short = (pred_return <= -effective_threshold) and (calibrated_confidence >= 0.45)
+
+            if is_buy:
+                signal = "BUY"
+            elif is_short:
+                signal = "SELL"
+            else:
+                signal = "HOLD"
+
+            ema_cross = float(last_row.get("ema_cross_5_20", 0.0))
+            vol_zscore = float(last_row.get("vol_spike_zscore", 0.0))
+            wick_pressure = float(last_row.get("wick_pressure", 0.5))
+
+            results[sym] = {
+                "symbol": str(last_row["symbol"]),
+                "company": STOCK_UNIVERSE.get(str(last_row["symbol"]), str(last_row["symbol"])),
+                "current_price": round(current_price, 2),
+                "predicted_price_1m": round(predicted_price, 2),
+                "predicted_return_pct": round(pred_return * 100, 3),
+                "confidence": round(calibrated_confidence * 100, 1),
+                "raw_breakout_prob": round(raw_breakout_prob * 100, 1),
+                "signal": signal,
+                "direction": "LONG" if is_buy else ("SHORT" if is_short else "FLAT"),
+                "prediction_valid": True,
+                "error": None,
+                "profit_threshold_pct": round(effective_threshold * 100, 2),
+                "timestamp": last_row["timestamp"].isoformat() if hasattr(last_row["timestamp"], "isoformat") else str(last_row["timestamp"]),
+                "micro_rsi": round(float(last_row.get("micro_rsi_7", 50)), 1),
+                "micro_vwap_dist_pct": round(float(last_row.get("micro_vwap_dist", 0)) * 100, 3),
+                "ema_cross_pct": round(ema_cross * 100, 3),
+                "vol_zscore": round(vol_zscore, 2),
+                "wick_pressure": round(wick_pressure, 2)
+            }
+
+        return results
+

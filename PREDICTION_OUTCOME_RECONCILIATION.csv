@@ -1,0 +1,8 @@
+symbol,sample_count,mean_spot_price,model_mae_bps,model_rmse_bps,model_bias_bps,model_dir_accuracy_pct,zero_return_mae_bps,zero_return_rmse_bps,persistence_mae_bps,persistence_dir_acc_pct,beats_zero_return,beats_persistence,provenance
+AXISBANK.NS,1377,1285.86,13.04,16.86,-10.71,46.99,5.29,8.18,3.33,72.02,False,False,"KOTAK_NEO_TRADE_API (8,214) / YFINANCE_LIVE (48)"
+BAJFINANCE.NS,1377,965.46,14.55,18.41,-11.94,47.57,6.12,9.59,3.5,76.16,False,False,"KOTAK_NEO_TRADE_API (8,214) / YFINANCE_LIVE (48)"
+INFY.NS,1377,1112.98,13.48,17.47,-10.54,46.77,6.17,9.61,3.91,73.11,False,False,"KOTAK_NEO_TRADE_API (8,214) / YFINANCE_LIVE (48)"
+NIFTYBEES.NS,1377,261.17,12.74,16.22,-11.27,41.47,2.44,3.42,1.86,65.7,False,False,"KOTAK_NEO_TRADE_API (8,214) / YFINANCE_LIVE (48)"
+RELIANCE.NS,1377,1202.89,15.07,19.21,-12.99,45.39,5.39,7.33,3.43,73.62,False,False,"KOTAK_NEO_TRADE_API (8,214) / YFINANCE_LIVE (48)"
+TATASTEEL.NS,1377,175.64,13.68,17.33,-11.19,46.33,4.98,6.86,3.22,73.76,False,False,"KOTAK_NEO_TRADE_API (8,214) / YFINANCE_LIVE (48)"
+ALL_SYMBOLS_OVERALL,8262,834.0,13.76,17.61,-11.44,45.75,5.06,7.79,3.21,72.4,False,False,"KOTAK_NEO_TRADE_API (8,214) / YFINANCE_LIVE (48)"

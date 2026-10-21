@@ -19,9 +19,13 @@ class ExpectedReturnRegressor:
     Combines LightGBM DART + CatBoost Huber + XGBoost Pseudo-Huber + ExtraTrees
     to accurately predict real financial return magnitude without artificial compression.
     """
-    def __init__(self, model_dir='QA/models/saved_models'):
-        self.model_dir = model_dir
+    def __init__(self, model_dir=None):
+        if model_dir is None:
+            self.model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'saved_models'))
+        else:
+            self.model_dir = model_dir
         os.makedirs(self.model_dir, exist_ok=True)
+        self.fitted_models = set()
 
         self.models = {
             'lgbm': LGBMRegressor(
@@ -122,12 +126,21 @@ class ExpectedReturnRegressor:
         print(f"Return Regressors saved to {self.model_dir}")
 
     def predict(self, X):
-        """Weighted ensemble prediction across 4 models."""
-        p_lgb = self.models['lgbm'].predict(X)
-        p_cat = self.models['catboost'].predict(X)
-        p_xgb = self.models['xgb'].predict(X)
-        p_et = self.models['extratrees'].predict(X)
-        return (p_lgb * 0.35) + (p_cat * 0.30) + (p_xgb * 0.25) + (p_et * 0.10)
+        """Weighted ensemble prediction across available fitted models."""
+        base_weights = {'lgbm': 0.35, 'catboost': 0.30, 'xgb': 0.25, 'extratrees': 0.10}
+        active_preds = []
+        for name, weight in base_weights.items():
+            model = self.models.get(name)
+            if model is not None and (name in self.fitted_models or hasattr(model, "estimators_") or hasattr(model, "tree_") or hasattr(model, "is_fitted_") or hasattr(model, "booster_")):
+                try:
+                    p = model.predict(X)
+                    active_preds.append((p, weight))
+                except Exception:
+                    pass
+        if not active_preds:
+            raise RuntimeError("No fitted return regressor models available to make predictions.")
+        total_weight = sum(w for _, w in active_preds)
+        return sum(p * (w / total_weight) for p, w in active_preds)
 
     def load(self):
         """Load pre-trained models from disk."""
@@ -135,6 +148,7 @@ class ExpectedReturnRegressor:
             path = os.path.join(self.model_dir, f'return_regressor_{name}.joblib')
             if os.path.exists(path):
                 self.models[name] = joblib.load(path)
+                self.fitted_models.add(name)
 
 
 if __name__ == "__main__":

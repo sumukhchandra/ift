@@ -1,129 +1,148 @@
-"""
-Simulation script to backtest the NSE Auto-Trader on the last full trading session.
-"""
-
+import json
 import os
 import sys
-import json
-import pandas as pd
 from datetime import datetime, timedelta
+import pandas as pd
+import numpy as np
 
-# Fix Windows console unicode printing for Rupee symbol
-if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8')
-
+# Add path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from nse_auto_trader import NSEAutoTrader
-from data.fetch_stock_data import build_stock_dataset
-from stocks_config import STOCK_SYMBOLS
+from stocks_config import STOCK_SYMBOLS, STOCK_UNIVERSE, DEFAULT_CAPITAL, MIN_NET_PROFIT_PCT, MAX_GROSS_LOSS_PCT
+from models.final_ensemble_engine import FinalEnsembleEngine
+from risk.india_tax_engine import IndiaTaxEngine
+from data.fetch_stock_data import add_stock_features, _flatten_columns, fetch_nifty_index_features
+import yfinance as yf
 
-# Custom state files for simulation
-SIM_STATE_FILE = os.path.join(os.path.dirname(__file__), "logs", "sim_trader_state.json")
-SIM_TRADE_LOG = os.path.join(os.path.dirname(__file__), "logs", "sim_trade_history.jsonl")
+def run_yesterday_simulation():
+    print("--- Starting Yesterday's Session Simulation ---")
 
-class SimulatorTrader(NSEAutoTrader):
-    """Subclass of NSEAutoTrader to feed historical data sequentially."""
-    
-    def __init__(self, capital, full_data, current_timestamp):
-        self.full_data = full_data
-        self.current_timestamp = current_timestamp
-        
-        # Override file paths
-        global STATE_FILE, TRADE_LOG_FILE
-        import nse_auto_trader
-        self.original_state_file = nse_auto_trader.STATE_FILE
-        self.original_trade_log = nse_auto_trader.TRADE_LOG_FILE
-        nse_auto_trader.STATE_FILE = SIM_STATE_FILE
-        nse_auto_trader.TRADE_LOG_FILE = SIM_TRADE_LOG
-        
-        # Clean old sim state
-        if os.path.exists(SIM_STATE_FILE):
-            os.remove(SIM_STATE_FILE)
-        if os.path.exists(SIM_TRADE_LOG):
-            os.remove(SIM_TRADE_LOG)
-            
-        super().__init__(capital=capital)
-        
-    def _fetch_live_data(self, symbols=None):
-        """Override to return data only up to current_timestamp."""
-        mask = self.full_data['timestamp'] <= self.current_timestamp
-        return self.full_data[mask].copy()
-        
-    def cleanup(self):
-        """Restore original paths."""
-        import nse_auto_trader
-        nse_auto_trader.STATE_FILE = self.original_state_file
-        nse_auto_trader.TRADE_LOG_FILE = self.original_trade_log
+    # 1. Setup
+    capital = DEFAULT_CAPITAL
+    available_capital = capital
+    positions = {}
+    trade_history = []
+    tax_engine = IndiaTaxEngine()
 
-def run_simulation():
-    print("Fetching historical data for simulation...")
-    # Fetch last 5 days to ensure we have a full trading day and warmup data
-    df = build_stock_dataset(period="5d", interval="5m")
-    
-    if df.empty:
+    # Setup Engine
+    model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "saved_models")
+    try:
+        engine = FinalEnsembleEngine(model_dir=model_dir)
+    except Exception as e:
+        print(f"Error loading models: {e}")
+        return
+
+    # 2. Fetch Data (Yesterday)
+    # To simulate yesterday, we fetch 5d of data to have enough for features
+    print("Fetching market data...")
+    raw_frames = []
+    for symbol in STOCK_SYMBOLS:
+        try:
+            df = yf.download(symbol, period="5d", interval="5m", auto_adjust=False, progress=False)
+            if df.empty: continue
+            df = _flatten_columns(df.reset_index())
+            time_col = "datetime" if "datetime" in df.columns else "date" if "date" in df.columns else "index"
+            df = df.rename(columns={time_col: "timestamp", "adj close": "adj_close"})
+            required = ["timestamp", "open", "high", "low", "close", "volume"]
+            df = df[required].copy()
+            df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
+            df["symbol"] = symbol
+            raw_frames.append(df)
+        except: continue
+
+    if not raw_frames:
         print("No data fetched.")
         return
-        
-    # Get unique dates
-    df['date_only'] = df['timestamp'].dt.date
-    dates = sorted(df['date_only'].unique())
-    
-    if len(dates) < 2:
-        print("Not enough days of data to simulate.")
+
+    combined = pd.concat(raw_frames, ignore_index=True)
+    nifty_df = fetch_nifty_index_features(period="5d", interval="5m")
+    feature_df = add_stock_features(combined, nifty_df=nifty_df)
+
+    # Filter for yesterday's date only
+    yesterday = (datetime.now() - timedelta(days=1)).date()
+    df_yesterday = feature_df[feature_df["timestamp"].dt.date == yesterday].copy()
+
+    if df_yesterday.empty:
+        print("No data available for yesterday's session.")
         return
-        
-    # Target the last full trading day
-    target_date = dates[-2]  # Yesterday or last full session
-    print(f"\nSimulating trading session for: {target_date}")
-    
-    # Filter timestamps for the target date
-    day_data = df[df['date_only'] == target_date]
-    timestamps = sorted(day_data['timestamp'].unique())
-    
-    print(f"Total 5m intervals in session: {len(timestamps)}")
-    print("Starting simulation with Rs.100,000 capital...\n")
-    print("-" * 60)
-    
-    trader = SimulatorTrader(capital=100000, full_data=df, current_timestamp=timestamps[0])
-    
+
+    # 3. Simulation Loop
+    timestamps = sorted(df_yesterday["timestamp"].unique())
+
     for ts in timestamps:
-        trader.current_timestamp = ts
-        # Suppress prints for clean output, unless a trade happens
-        import sys, io
-        old_stdout = sys.stdout
-        sys.stdout = io.StringIO()
-        
-        trader.run_single_cycle()
-        
-        output = sys.stdout.getvalue()
-        sys.stdout = old_stdout
-        
-        if "BUY" in output or "SELL" in output:
-            print(f"[{ts.strftime('%H:%M')}] " + output.strip())
-            
-    # Force close any open positions at end of day
-    print("\n" + "-" * 60)
-    print("End of day reached. Closing open positions...")
-    trader.current_timestamp = timestamps[-1]
-    feature_df = trader._fetch_live_data()
-    
-    for symbol in list(trader.state["positions"].keys()):
-        symbol_data = feature_df[feature_df["symbol"] == symbol].sort_values("timestamp")
-        if not symbol_data.empty:
-            current_price = float(symbol_data["close"].iloc[-1])
-            pos = trader.state["positions"][symbol]
-            gross_return = (current_price - pos["entry_price"]) / pos["entry_price"]
-            trader._execute_sell(symbol, current_price, gross_return, "EOD_CLOSE")
-            
-    print("-" * 60)
-    print("\n Simulation Results:")
-    summary = trader.get_portfolio_summary()
-    for k, v in summary.items():
-        if k != "positions" and k != "recent_outcomes":
-            print(f"  {k}: {v}")
-            
-    trader.cleanup()
+        group = df_yesterday[df_yesterday["timestamp"] == ts]
+        price_map = group.set_index("symbol")["close"].to_dict()
+
+        # --- CHECK EXITS ---
+        for symbol in list(positions.keys()):
+            if symbol not in price_map: continue
+            curr_price = float(price_map[symbol])
+            pos = positions[symbol]
+            gross_ret = (curr_price - pos["entry_price"]) / pos["entry_price"]
+
+            if gross_ret < -MAX_GROSS_LOSS_PCT:
+                # Stop Loss
+                cost = tax_engine.calculate_total_cost(pos["invested"], gross_ret)
+                net_profit = cost["net_profit"]
+                available_capital += (pos["invested"] + net_profit)
+                trade_history.append({"symbol": symbol, "result": "STOP_LOSS", "net_pnl": net_profit})
+                del positions[symbol]
+            elif gross_ret > 0:
+                # Take Profit
+                is_prof, breakdown = tax_engine.is_exit_profitable(pos["invested"], gross_ret, min_net_pct=MIN_NET_PROFIT_PCT)
+                if is_prof:
+                    net_profit = breakdown["net_profit"]
+                    available_capital += (pos["invested"] + net_profit)
+                    trade_history.append({"symbol": symbol, "result": "TAKE_PROFIT", "net_pnl": net_profit})
+                    del positions[symbol]
+
+        # --- CHECK ENTRIES ---
+        for symbol in STOCK_SYMBOLS:
+            if symbol in positions: continue
+            if available_capital < 1000: break
+
+            symbol_data = df_yesterday[df_yesterday["symbol"] == symbol].sort_values("timestamp")
+            current_window = symbol_data[symbol_data["timestamp"] <= ts].tail(50)
+            if len(current_window) < 50: continue
+
+            curr_price = float(current_window["close"].iloc[-1])
+            decision = engine.evaluate_state(current_window)
+            prob = float(decision["final_probability"])
+            exp_ret = float(decision.get("expected_return", 0))
+
+            if prob >= 0.60 and exp_ret > 0.001:
+                # Basic sizing: 10% of available capital
+                alloc = available_capital * 0.10
+                viable, cost_bd = tax_engine.is_trade_viable(alloc, exp_ret, min_net_pct=MIN_NET_PROFIT_PCT)
+
+                if viable:
+                    positions[symbol] = {
+                        "entry_price": curr_price,
+                        "invested": alloc,
+                        "entry_time": ts
+                    }
+                    available_capital -= alloc
+
+    # 4. Final Tally
+    # Close all remaining positions at end of day
+    for symbol, pos in positions.items():
+        # Get last price of the day
+        last_price = df_yesterday[df_yesterday["symbol"] == symbol]["close"].iloc[-1]
+        gross_ret = (last_price - pos["entry_price"]) / pos["entry_price"]
+        cost = tax_engine.calculate_total_cost(pos["invested"], gross_ret)
+        net_profit = cost["net_profit"]
+        available_capital += (pos["invested"] + net_profit)
+        trade_history.append({"symbol": symbol, "result": "EOD_CLOSE", "net_pnl": net_profit})
+
+    final_pnl = available_capital - capital
+    print(f"\n--- Simulation Results for {yesterday} ---")
+    print(f"Starting Capital: Rs.{capital:.2f}")
+    print(f"Ending Capital:   Rs.{available_capital:.2f}")
+    print(f"Net Profit/Loss:   Rs.{final_pnl:.2f} ({ (final_pnl/capital)*100 :.2f}%)")
+    print(f"Total Trades:      {len(trade_history)}")
+
+    for trade in trade_history:
+        print(f"Trade {trade['symbol']}: {trade['result']} | PnL: Rs.{trade['net_pnl']:.2f}")
 
 if __name__ == "__main__":
-    run_simulation()
+    run_yesterday_simulation()

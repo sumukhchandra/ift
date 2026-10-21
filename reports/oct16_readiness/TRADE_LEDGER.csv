@@ -1,0 +1,1 @@
+trade_id,timestamp,symbol,action,quantity,price,gross_amount,brokerage,stt,exchange_fees,sebi,stamp_duty,gst,slippage,total_friction,net_amount,realized_pnl,running_capital,provenance_id

@@ -185,5 +185,6 @@ class ContinuousSupervisor:
             time.sleep(2)
 
 if __name__ == "__main__":
-    supervisor = ContinuousSupervisor()
-    supervisor.run()
+    print("[RESEARCH_ARCHIVE] ContinuousSupervisor is FROZEN and RETIRED.")
+    print("All active paper trading is routed through AlphaNSE Unified Ensemble.")
+    sys.exit(0)
