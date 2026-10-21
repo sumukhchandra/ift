@@ -210,13 +210,19 @@ def main():
     daemon_pid = state.get("pid")
     daemon_status = state.get("status", "UNKNOWN")
 
+    # Format heartbeat age safely
+    heartbeat_str = f"{heartbeat_age:.1f}s ago" if heartbeat_age is not None else "No heartbeat recorded"
+
     # Determine Status Badge
-    if is_stale or daemon_status == "SAFE_HALT":
-        status_badge_html = '<span class="badge badge-stale">⚠️ STALE DATA / SAFE HALT</span>'
-        status_desc = f"Last heartbeat was {heartbeat_age:.1f}s ago (> 120s limit) or Safe Halt active."
+    if daemon_status == "SAFE_HALT":
+        status_badge_html = '<span class="badge badge-stale">⚠️ SAFE HALT ACTIVE</span>'
+        status_desc = f"Safe Halt active. Last heartbeat: {heartbeat_str}."
     elif not market_active:
         status_badge_html = '<span class="badge badge-closed">🔒 MARKET CLOSED</span>'
         status_desc = f"Next open: {calculate_next_session_countdown(now_ist)}"
+    elif is_stale:
+        status_badge_html = '<span class="badge badge-stale">⚠️ STALE DATA</span>'
+        status_desc = f"Last quote update was {heartbeat_str} (> 120s limit)."
     elif daemon_status in ("TRADING_ACTIVE", "RUNNING"):
         status_badge_html = '<span class="badge badge-live">🟢 LIVE DATA</span>'
         status_desc = f"Worker cycle #{state.get('cycle', 0)} active. Kotak Neo connected."
@@ -413,11 +419,11 @@ def main():
                 pred_rows.append({
                     "Timestamp": p.get("timestamp"),
                     "Symbol": p.get("symbol"),
-                    "Spot (₹)": f"₹{p.get('spot_price', 0):.2f}",
-                    "Spec Alpha": f"{p.get('specialist_alpha_bps', 0):+.2f} bps",
-                    "Tree Alpha": f"{p.get('tree_alpha_bps', 0):+.2f} bps",
+                    "Spot (₹)": f"₹{float(p.get('spot_price') or 0.0):.2f}",
+                    "Spec Alpha": f"{float(p.get('specialist_alpha_bps') or 0.0):+.2f} bps",
+                    "Tree Alpha": f"{float(p.get('tree_alpha_bps') or 0.0):+.2f} bps",
                     "Signal": p.get("signal", "HOLD"),
-                    "Rejection Reason": p.get("rejection_reason", "N/A")[:35]
+                    "Rejection Reason": (p.get("rejection_reason") or "N/A")[:35]
                 })
             df_preds = pd.DataFrame(pred_rows)
             st.dataframe(df_preds, use_container_width=True, hide_index=True)
@@ -431,9 +437,9 @@ def main():
                 outc_rows.append({
                     "Timestamp": o.get("creation_timestamp"),
                     "Symbol": o.get("symbol"),
-                    "Spot (₹)": f"₹{o.get('current_spot_price', 0):.2f}",
-                    "Observed (₹)": f"₹{o.get('actual_forward_price', 0):.2f}",
-                    "Return": f"{o.get('actual_return_bps', 0):+.2f} bps",
+                    "Spot (₹)": f"₹{float(o.get('current_spot_price') or 0.0):.2f}",
+                    "Observed (₹)": f"₹{float(o.get('actual_forward_price') or 0.0):.2f}",
+                    "Return": f"{float(o.get('actual_return_bps') or 0.0):+.2f} bps",
                     "Direction Correct": "✅ YES" if o.get("direction_correct") else "❌ NO"
                 })
             df_outc = pd.DataFrame(outc_rows)
@@ -463,9 +469,9 @@ def main():
                     "Trade ID": t.get("trade_id"),
                     "Symbol": t.get("symbol") or t.get("instrument"),
                     "Qty": t.get("quantity", 1),
-                    "Entry": f"₹{t.get('money_in', 0):.2f}",
-                    "Exit": f"₹{t.get('money_out', 0):.2f}",
-                    "Net PnL": f"₹{t.get('net_pnl', 0):+.2f}",
+                    "Entry": f"₹{float(t.get('money_in') or 0.0):.2f}",
+                    "Exit": f"₹{float(t.get('money_out') or 0.0):.2f}",
+                    "Net PnL": f"₹{float(t.get('net_pnl') or 0.0):+.2f}",
                     "Reason": t.get("exit_reason", "")
                 })
             df_trd = pd.DataFrame(trade_rows)
@@ -489,7 +495,7 @@ def main():
             - **Broker Integration:** `{state.get('broker', 'Kotak Neo Trade API')}`
             - **Broker UCC:** `{state.get('ucc', '116K1')}`
             - **Execution Mode:** `PAPER_TESTING` (Dual-Lock Active)
-            - **Heartbeat Latency:** `{heartbeat_age:.1f}s ago` if heartbeat_age else 'N/A'
+            - **Heartbeat Latency:** `{heartbeat_str}`
             """)
 
         st.markdown("#### Recent Telemetry & Audit Stream")
